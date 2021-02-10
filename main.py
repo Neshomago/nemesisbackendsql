@@ -453,26 +453,29 @@ def get_equipment():
 		cursor.close()
 		conn.close()
 
-# Añadir equipment
+# Añadir equipment METODO OK FINAL
 @app.route('/ticket-equip/', methods=['POST'])
 def add_equipent():
 	try:
-		# _createdBy = _json['createdBy']
+		_json = request.json
+		_item = _json['item']
+		_ticketId = _json['ticketId']
+		_quantity = _json['quantity']
+		#_createdBy = _json['createdBy']
 		# _customerId = _json['customerId']
 		# _agencyId = _json['agencyId']
 		# _warehouseId = _json['warehouseId']
 		# _subdivision = _json['subdivision']
 		# _userTraza = _json['userTraza']
-		# _assignedDate = _json['assignedDate']
+		# _ticketCode = _json['ticketCode']
 		# _item_description = _json['item_description']
 		# _item_serial = _json['item_serial']
-		_json = request.json
-		_item = _json['item']
-		_quantity = _json['quantity']
-		_ticketId = _json['ticketId']
+		# _assignedDate = _json['assignedDate']
 		if request.method == 'POST':
 			sql = 'INSERT INTO n_nemesis_n_equipment_model (item, quantity, ticketId) VALUES (%s, %s, %s)'
 			data = (_item, _quantity, _ticketId)
+			# sql = 'INSERT INTO n_nemesis_n_equipment_model (item, item_description, item_serial, quantity, ticketId, ticketCode, createdBy, customerId, agencyId, warehouseId, subdivision, userTraza, assignedDate) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+			# data = (_item, _item_description, _item_serial, _quantity, _ticketId, _ticketCode, _createdBy, _customerId, _agencyId, _warehouseId, _subdivision, _userTraza, _assignedDate)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
@@ -488,19 +491,37 @@ def add_equipent():
 		cursor.close()
 		conn.close()
 
+# get Equipment List from Ticket by ticketId
+@app.route('/equipmentList/<int:ticketId>')
+def equipmentList(ticketId):
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute('SELECT * FROM n_nemesis_n_equipment_model WHERE ticketId = %s', ticketId)
+		rows = cursor.fetchall()
+		resp = jsonify(rows)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+
 # Añadir Seriales
 @app.route('/ticket-serial/', methods=['POST'])
-def add_serial(serial, name):
+def add_serial(ticketId, serial, id):
 	try:
 		_json = request.json
-		_item = _json['item']
+		# _item = _json['item']
 		_item_serial = _json['item_serial']
-		_createdBy = _json['createdBy']
-		_customerId = _json['customerId']
-		_agencyId = _json['agencyId']
+		# _createdBy = _json['createdBy']
+		# _customerId = _json['customerId']
+		# _agencyId = _json['agencyId']
 		if request.method == 'POST':
-			sql = ('SELECT item, item_serial FROM n_nemesis_n_equipment_model; UPDATE n_nemesis_n_equipment_model SET serial=%s WHERE name=%s', serial, name)
-			data = (_item, _item_serial)
+			sql = ('SELECT item, item_serial, ticketId FROM n_nemesis_n_equipment_model WHERE ticketId =%s; UPDATE n_nemesis_n_equipment_model SET item_serial = %s WHERE (id = %s)', ticketId, serial, id)
+			data = (ticketId, _item_serial, id)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
@@ -517,14 +538,14 @@ def add_serial(serial, name):
 		conn.close()
 
 # Añadir Tecnico Asignado
-@app.route('/ticket-technician/', methods=['POST'])
-def add_technician(id_tech):
+@app.route('/ticket-technician/<int:id>', methods=['POST'])
+def add_technician(id):
 	try:
 		_json = request.json
 		_tech = _json['tech_assign']
 		_assignedDate = _json['assignedDate']
 		if request.method == 'POST':
-			sql = ('UPDATE n_nemesis_n_ticket_model SET tech_assign = %s, assignedDate=%s version = 4 WHERE id=%s', _tech, _assignedDate, id_tech)
+			sql = ('UPDATE n_nemesis_n_ticket_model SET tech_assign = %s, assignedDate=%s, version = 4 WHERE id=%s', _tech, _assignedDate, id)
 			# data = (_tech,_assignedDate)
 			conn = mysql.connect()
 			cursor = conn.cursor()
@@ -656,7 +677,7 @@ def delete_tag(name):
 #
 #  Bloque de informacion de tickets
 #
-
+# METODO OK FINAL
 @app.route('/ticket/add', methods=['POST'])
 def add_ticket():
 	try:
@@ -670,12 +691,12 @@ def add_ticket():
 		_description = _json['description']
 		_ids = _json['ids']
 		_version = _json['version']
-		#_code = _json['code']
+		_code = _json['code']
 		# validate the received values
 		if request.method == 'POST':
 			# save edits
-			sql = 'INSERT INTO n_nemesis_n_ticket_model (createdBy, type, customerId, status, priority, agencyId, description, ids, version) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)'
-			data = (_createdBy, _type, _customerId, _status, _priority, _agencyId, _description, _ids, _version)
+			sql = 'INSERT INTO n_nemesis_n_ticket_model (createdBy, type, customerId, status, priority, agencyId, description, ids, version, code) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+			data = (_createdBy, _type, _customerId, _status, _priority, _agencyId, _description, _ids, _version, _code)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
@@ -691,6 +712,7 @@ def add_ticket():
 		cursor.close()
 		conn.close()
 
+# METODO OK FINAL
 @app.route('/tickets')
 def tickets():
 	try:
@@ -707,7 +729,7 @@ def tickets():
 		cursor.close()
 		conn.close()
 
-
+# METODO OK FINAL
 @app.route('/ticket/<int:id>')
 def ticket(id):
 	try:
@@ -724,44 +746,54 @@ def ticket(id):
 		cursor.close()
 		conn.close()
 
-# @app.route('/ticket/update', methods=['POST'])
-# def update_ticket():
-# 	try:
-# 		_json = request.json
-# 		_createdBy = _json['createdBy']
-# 		_type = _json['_type']
-# 		_customerId = _json['customerId']
-# 		_creationDate = _json['creationDate']
-# 		_status = _json['status']
-# 		_priority = _json['priority']
-# 		_agencyId = _json['agencyId']
-# 		_description = _json['description']
-# 		_ids = _json['ids']
-# 		_version = _json['version']
-# 		_code = _json['code']
-# 		# validate the received values
-# 		if request.method == 'POST':
-# 			# save edits
-# 			sql = "UPDATE n_nemesis_n_ticket_model SET createdBy=%s, type=%s, customerId=%s, creationDate=%s, status=%s, priority=%s, agencyId=%s, description=%s, ids=%s, version=%s, code=%s WHERE id=%s"
-# 			data = (_createdBy, _type, _customerId, _creationDate, _status, _priority, _agencyId, _customerId, _ids, _version, _code)
-# 			conn = mysql.connect()
-# 			cursor = conn.cursor()
-# 			cursor.execute(sql, data)
-# 			conn.commit()
-# 			resp = jsonify('Ticket updated successfully!')
-# 			resp.status_code = 200
-# 			return resp
-# 		else:
-# 			return not_found()
-# 	except Exception as e:
-# 		print(e)
-# 	finally:
-# 		cursor.close()
-# 		conn.close()
+#Update version for ticketing METODO OK FINAL
+@app.route('/ticketv/<int:id>', methods=['POST'])
+def update_ticketversion(id):
+	try:
+		_json = request.json
+		_version = _json['version']
+		_status = _json['status']
+		# validate the received values
+		if request.method == 'POST':
+			# save edits
+			sql = "UPDATE n_nemesis_n_ticket_model SET version=%s, status=%s WHERE id=%s"
+			data = (_version, _status, id)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = jsonify('Ticket version updated successfully!')
+			resp.status_code = 200
+			return resp
+		else:
+			return not_found()
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+
+# Ticket Warehouse stock of product
+@app.route('/ticket/<int:id>')
+def ticket(id):
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute("SELECT * FROM n_nemesis_n_ticket_model, n_nemesis_n_warehouse_model, n_nemesis_n_warehouseitemtype_model WHERE n_nemesis_n_ticket_model.agencyId = n_nemesis_n_agency_model.id AND n_nemesis_n_ticket_model.id=%s", id)
+		row = cursor.fetchall()
+		resp = jsonify(row)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
 
 # TICKET UPDATE ONLY NECCESARY FIELDS, 
 @app.route('/ticket/update/<int:id>', methods=['POST'])
-def update_ticket(id):
+def update_ticketdata(id):
 	try:
 		_json = request.json
 		_assignedDate = _json['assignedDate']
