@@ -6,11 +6,9 @@ from flask import flash, request
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 
-
-#
-#  Bloque de informacion de agencias
-#
-
+"""
+SECCION DE AGENCIAS, GET, POST Y UPDATE
+"""
 @app.route('/agency/add', methods=['POST'])
 def add_agency():
 	try:
@@ -301,7 +299,9 @@ def delete_contact(name):
 #
 #  Bloque de informacion de customers
 #
-
+"""
+BLOQUE DE CLIENTES / CUSTOMERS
+"""
 @app.route('/customer/add', methods=['POST'])
 def add_customer():
 	try:
@@ -433,7 +433,7 @@ def delete_customer(name):
 
 
 # # BLOQUE EQUIPO ADICIONAL DEL TICKET
-# #
+# # DONDE INGRESAMOS LOS ITEMS ADICIONALES
 # #
 
 # get equipment
@@ -491,7 +491,7 @@ def add_equipent():
 		cursor.close()
 		conn.close()
 
-# get Equipment List from Ticket by ticketId
+# get Equipment List from Ticket by ticketId METODO OK FINAL
 @app.route('/equipmentList/<int:ticketId>')
 def equipmentList(ticketId):
 	try:
@@ -509,9 +509,9 @@ def equipmentList(ticketId):
 		conn.close()
 
 
-# Añadir Seriales
-@app.route('/ticket-serial/', methods=['POST'])
-def add_serial(ticketId, serial, id):
+# Añadir Seriales METODO OK FINAL
+@app.route('/ticket-serial/<int:id>', methods=['POST'])
+def add_serial(id):
 	try:
 		_json = request.json
 		# _item = _json['item']
@@ -519,9 +519,11 @@ def add_serial(ticketId, serial, id):
 		# _createdBy = _json['createdBy']
 		# _customerId = _json['customerId']
 		# _agencyId = _json['agencyId']
+		_warehouse = _json['warehouseId']
+		_ticketId = _json['ticketId']
 		if request.method == 'POST':
-			sql = ('SELECT item, item_serial, ticketId FROM n_nemesis_n_equipment_model WHERE ticketId =%s; UPDATE n_nemesis_n_equipment_model SET item_serial = %s WHERE (id = %s)', ticketId, serial, id)
-			data = (ticketId, _item_serial, id)
+			sql = "UPDATE n_nemesis_n_equipment_model SET item_serial = %s, warehouseId=%s WHERE (id = %s AND ticketId =%s)"
+			data = (_item_serial, _warehouse, id, _ticketId)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
@@ -537,19 +539,20 @@ def add_serial(ticketId, serial, id):
 		cursor.close()
 		conn.close()
 
-# Añadir Tecnico Asignado
-@app.route('/ticket-technician/<int:id>', methods=['POST'])
+# Añadir Tecnico Asignado METODO OK FINAL
+@app.route('/ticket/technicianassign/<int:id>', methods=['POST'])
 def add_technician(id):
 	try:
 		_json = request.json
 		_tech = _json['tech_assign']
 		_assignedDate = _json['assignedDate']
+		_version = _json['version']
 		if request.method == 'POST':
-			sql = ('UPDATE n_nemesis_n_ticket_model SET tech_assign = %s, assignedDate=%s, version = 4 WHERE id=%s', _tech, _assignedDate, id)
-			# data = (_tech,_assignedDate)
+			sql = "UPDATE n_nemesis_n_ticket_model SET tech_assign = %s, assignedDate=%s, version = %s WHERE id=%s"
+			data = (_tech,_assignedDate, _version, id)
 			conn = mysql.connect()
 			cursor = conn.cursor()
-			cursor.execute(sql)
+			cursor.execute(sql, data)
 			conn.commit()
 			resp = jsonify('Technician Assigned added')
 			resp.status_code = 200
@@ -601,7 +604,7 @@ def tags():
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute('SELECT * FROM n_nemesis_n_warehouseitemtype_model')
+		cursor.execute('SELECT name, isStack, minimumStack FROM n_nemesis_n_warehouseitemtype_model')
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
@@ -774,13 +777,13 @@ def update_ticketversion(id):
 		conn.close()
 
 
-# Ticket Warehouse stock of product
-@app.route('/ticket/<int:id>')
-def ticket(id):
+# Item from Warehouse stock of product
+@app.route('/ticketwarehouse')
+def ticketwarehouse():
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute("SELECT * FROM n_nemesis_n_ticket_model, n_nemesis_n_warehouse_model, n_nemesis_n_warehouseitemtype_model WHERE n_nemesis_n_ticket_model.agencyId = n_nemesis_n_agency_model.id AND n_nemesis_n_ticket_model.id=%s", id)
+		cursor.execute("SELECT * FROM n_nemesis_n_warehouse_model")
 		row = cursor.fetchall()
 		resp = jsonify(row)
 		resp.status_code = 200
@@ -873,7 +876,7 @@ def add_user():
 		conn.close()
 
 
-### Busqueda de tecnicos
+### Busqueda de tecnicos Metodo OK FINAL
 @app.route('/techn')
 def techn():
 	try:
