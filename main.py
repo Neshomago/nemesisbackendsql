@@ -461,6 +461,7 @@ def add_equipent():
 		_item = _json['item']
 		_ticketId = _json['ticketId']
 		_quantity = _json['quantity']
+		_item_description = _json['item_description']
 		#_createdBy = _json['createdBy']
 		# _customerId = _json['customerId']
 		# _agencyId = _json['agencyId']
@@ -468,12 +469,11 @@ def add_equipent():
 		# _subdivision = _json['subdivision']
 		# _userTraza = _json['userTraza']
 		# _ticketCode = _json['ticketCode']
-		# _item_description = _json['item_description']
 		# _item_serial = _json['item_serial']
 		# _assignedDate = _json['assignedDate']
 		if request.method == 'POST':
-			sql = 'INSERT INTO n_nemesis_n_equipment_model (item, quantity, ticketId) VALUES (%s, %s, %s)'
-			data = (_item, _quantity, _ticketId)
+			sql = 'INSERT INTO n_nemesis_n_equipment_model (item, item_description, quantity, ticketId) VALUES (%s, %s, %s, %s)'
+			data = (_item, _item_description, _quantity, _ticketId)
 			# sql = 'INSERT INTO n_nemesis_n_equipment_model (item, item_description, item_serial, quantity, ticketId, ticketCode, createdBy, customerId, agencyId, warehouseId, subdivision, userTraza, assignedDate) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
 			# data = (_item, _item_description, _item_serial, _quantity, _ticketId, _ticketCode, _createdBy, _customerId, _agencyId, _warehouseId, _subdivision, _userTraza, _assignedDate)
 			conn = mysql.connect()
@@ -604,7 +604,7 @@ def tags():
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute('SELECT name, isStack, minimumStack FROM n_nemesis_n_warehouseitemtype_model')
+		cursor.execute('SELECT name, description, isStack, minimumStack FROM n_nemesis_n_warehouseitemtype_model')
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
@@ -793,6 +793,7 @@ def ticketwarehouse():
 	finally:
 		cursor.close()
 		conn.close()
+
 
 # TICKET UPDATE ONLY NECCESARY FIELDS, 
 @app.route('/ticket/update/<int:id>', methods=['POST'])
