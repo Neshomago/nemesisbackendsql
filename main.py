@@ -76,7 +76,6 @@ def agencys_per_client():
 		cursor.close()
 		conn.close()
 
-
 @app.route('/agency/<string:customerId>')
 def agencyCustomer(customerId):
 	try:
@@ -431,7 +430,6 @@ def delete_customer(name):
 		conn.close()
 
 
-
 # # BLOQUE EQUIPO ADICIONAL DEL TICKET
 # # DONDE INGRESAMOS LOS ITEMS ADICIONALES
 # #
@@ -453,6 +451,9 @@ def get_equipment():
 		cursor.close()
 		conn.close()
 
+		# DELETE FROM `nemesis`.`n_nemesis_n_equipment_model` WHERE (`id` = '59');
+		# UPDATE `nemesis`.`n_nemesis_n_equipment_model` SET `item` = 'BENQ 22\"' WHERE (`id` = '60');
+
 # Añadir equipment METODO OK FINAL
 @app.route('/ticket-equip/', methods=['POST'])
 def add_equipent():
@@ -462,20 +463,9 @@ def add_equipent():
 		_ticketId = _json['ticketId']
 		_quantity = _json['quantity']
 		_item_description = _json['item_description']
-		#_createdBy = _json['createdBy']
-		# _customerId = _json['customerId']
-		# _agencyId = _json['agencyId']
-		# _warehouseId = _json['warehouseId']
-		# _subdivision = _json['subdivision']
-		# _userTraza = _json['userTraza']
-		# _ticketCode = _json['ticketCode']
-		# _item_serial = _json['item_serial']
-		# _assignedDate = _json['assignedDate']
 		if request.method == 'POST':
 			sql = 'INSERT INTO n_nemesis_n_equipment_model (item, item_description, quantity, ticketId) VALUES (%s, %s, %s, %s)'
 			data = (_item, _item_description, _quantity, _ticketId)
-			# sql = 'INSERT INTO n_nemesis_n_equipment_model (item, item_description, item_serial, quantity, ticketId, ticketCode, createdBy, customerId, agencyId, warehouseId, subdivision, userTraza, assignedDate) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
-			# data = (_item, _item_description, _item_serial, _quantity, _ticketId, _ticketCode, _createdBy, _customerId, _agencyId, _warehouseId, _subdivision, _userTraza, _assignedDate)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
@@ -514,21 +504,17 @@ def equipmentList(ticketId):
 def add_serial(id):
 	try:
 		_json = request.json
-		# _item = _json['item']
 		_item_serial = _json['item_serial']
-		# _createdBy = _json['createdBy']
-		# _customerId = _json['customerId']
-		# _agencyId = _json['agencyId']
-		_warehouse = _json['warehouseId']
+		# _warehouse = _json['warehouseId']
 		_ticketId = _json['ticketId']
 		if request.method == 'POST':
-			sql = "UPDATE n_nemesis_n_equipment_model SET item_serial = %s, warehouseId=%s WHERE (id = %s AND ticketId =%s)"
-			data = (_item_serial, _warehouse, id, _ticketId)
+			sql = "UPDATE n_nemesis_n_equipment_model SET item_serial = %s WHERE (id = %s AND ticketId =%s)"
+			data = (_item_serial, id, _ticketId)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
 			conn.commit()
-			resp = jsonify('Adittional Data added')
+			resp = jsonify('Item Serial updated correctly')
 			resp.status_code = 200
 			return resp
 		else:
@@ -795,21 +781,21 @@ def ticketwarehouse():
 		conn.close()
 
 
-# TICKET UPDATE ONLY NECCESARY FIELDS, 
+# TICKET UPDATE ONLY NECCESARY FIELDS, METODO OK FINAL
 @app.route('/ticket/update/<int:id>', methods=['POST'])
 def update_ticketdata(id):
 	try:
 		_json = request.json
-		_assignedDate = _json['assignedDate']
-		_status = _json['status']
+		_code = _json['code']
+		_type = _json['type']
+		_priority = _json['priority']
 		_description = _json['description']
-		_tech_assign = _json['tech_assign']
-		_assigned_tags = jsonify['assigned_tags']
+		_agencyId = _json['agencyId']
 		# validate the received values
 		if request.method == 'POST':
 			# save edits
-			sql = "UPDATE n_nemesis_n_ticket_model SET status=%s, description=%s, tech_assign=%s, assigned_tags=%s, assignedDate=%s, WHERE id=%s"
-			data = (_status, _description, _tech_assign, _assigned_tags, _assignedDate, id)
+			sql = "UPDATE n_nemesis_n_ticket_model SET type=%s, priority=%s, agencyId=%s, description=%s, code=%s WHERE id=%s"
+			data = (_type, _priority, _agencyId, _description, _code, id)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
@@ -826,16 +812,42 @@ def update_ticketdata(id):
 		conn.close()
 
 
-@app.route('/ticket/delete/<int:id>')
-def delete_ticket(id):
+# Elemento de ticket eliminar
+@app.route('/ticket-equip/del/<int:id>')
+def delete_ItemEquipmentticket(id):
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor()
-		cursor.execute("DELETE FROM n_nemesis_n_ticket_model WHERE id=%s", (id))
+		cursor.execute("DELETE FROM n_nemesis_n_equipment_model WHERE id=%s", id)
 		conn.commit()
-		resp = jsonify('Ticket deleted successfully!')
+		resp = jsonify('Item from Additional equipment deleted successfully!')
 		resp.status_code = 200
 		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+
+# Abort Ticket
+@app.route('/ticket/abort/<int:id>')
+def abort_ticket(id):
+	try:
+		_json = request.json
+		_status = _json['status']
+		if request.method == 'POST':
+			sql = "UPDATE n_nemesis_n_ticket_model SET status=%s WHERE id=%s"
+			data = (_status, data)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = jsonify('Ticket send to Aborted Status successfully!')
+			resp.status_code = 200
+			return resp
+		else:
+			return not_found()
 	except Exception as e:
 		print(e)
 	finally:
