@@ -108,6 +108,22 @@ def agencyId(agencyId):
 		cursor.close()
 		conn.close()
 
+@app.route('/agencyiso/<int:agencyId>')
+def agencyIso(agencyId):
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute('SELECT * FROM n_nemesis_n_agency_model WHERE id =%s', agencyId)
+		rows = cursor.fetchall()
+		resp = jsonify(rows)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
 @app.route('/agency/<string:name>')
 def agency(name):
 	try:
@@ -218,6 +234,22 @@ def contacts():
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
 		cursor.execute("SELECT * FROM n_nemesis_n_contact_model ORDER BY id DESC")
+		rows = cursor.fetchall()
+		resp = jsonify(rows)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+@app.route('/contactiso/<int:id>')
+def contactIso(id):
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute("SELECT * FROM n_nemesis_n_contact_model WHERE id=%s", id)
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
