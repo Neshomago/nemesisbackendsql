@@ -552,6 +552,32 @@ def add_technician(id):
 		conn.close()
 
 
+# Actualizar Nuevo Técnico METODO OK FINAL
+@app.route('/ticket/technicianupdate/<int:id>', methods=['POST'])
+def add_technician(id):
+	try:
+		_json = request.json
+		_tech = _json['tech_assign']
+		_assignedDate = _json['assignedDate']
+		_version = _json['version']
+		if request.method == 'POST':
+			sql = "UPDATE n_nemesis_n_ticket_model SET tech_assign = %s, assignedDate=%s, version = %s WHERE id=%s"
+			data = (_tech,_assignedDate, _version, id)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = jsonify('Technician Assigned added')
+			resp.status_code = 200
+			return resp
+		else:
+			return not_found()
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
 #
 #  Bloque de informacion de tags
 #
