@@ -586,7 +586,7 @@ def add_technician(id):
 
 # Actualizar Nuevo Técnico METODO OK FINAL
 @app.route('/ticket/technicianupdate/<int:id>', methods=['POST'])
-def add_technician(id):
+def update_technician(id):
 	try:
 		_json = request.json
 		_tech = _json['tech_assign']
