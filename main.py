@@ -492,12 +492,11 @@ def add_equipent():
 	try:
 		_json = request.json
 		_item = _json['item']
-		_ticketId = _json['ticketId']
 		_quantity = _json['quantity']
-		_item_description = _json['item_description']
+		_ticketId = _json['ticketId']
 		if request.method == 'POST':
-			sql = 'INSERT INTO n_nemesis_n_equipment_model (item, item_description, quantity, ticketId) VALUES (%s, %s, %s, %s)'
-			data = (_item, _item_description, _quantity, _ticketId)
+			sql = 'INSERT INTO n_nemesis_n_equipment_model (item, quantity, ticketId) VALUES (%s, %s, %s)'
+			data = (_item, _quantity, _ticketId)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
@@ -889,14 +888,14 @@ def delete_ItemEquipmentticket(id):
 
 
 # Abort Ticket
-@app.route('/ticket/abort/<int:id>')
+@app.route('/ticket/abort/<int:id>', methods=['POST'])
 def abort_ticket(id):
 	try:
 		_json = request.json
 		_status = _json['status']
 		if request.method == 'POST':
 			sql = "UPDATE n_nemesis_n_ticket_model SET status=%s WHERE id=%s"
-			data = (_status, data)
+			data = (_status, id)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
@@ -952,9 +951,8 @@ def add_user():
 def techn():
 	try:
 		conn = mysql.connect()
-		# role = 1
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute("SELECT id, username, IsAvailable FROM n_nemesis_users_user_model WHERE RoleT = 1")
+		cursor.execute("SELECT id, username, IsAvailable FROM n_nemesis_users_user_model WHERE RoleT = 1 AND IsAvailable = 1")
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
