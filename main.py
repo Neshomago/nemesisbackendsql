@@ -838,16 +838,33 @@ def ticketwarehouse():
 		conn.close()
 
 
+# GET INFO TO UPDATE TICKET
+@app.route('/ticket2up/<int:Id>')
+def ticketinfotoup(Id):
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute('SELECT type, priority, agencyId, description, code FROM n_nemesis_n_ticket_model WHERE id=%s ', Id)
+		rows = cursor.fetchall()
+		resp = jsonify(rows)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
 # TICKET UPDATE ONLY NECCESARY FIELDS, METODO OK FINAL
 @app.route('/ticket/update/<int:id>', methods=['POST'])
 def update_ticketdata(id):
 	try:
 		_json = request.json
-		_code = _json['code']
 		_type = _json['type']
 		_priority = _json['priority']
-		_description = _json['description']
 		_agencyId = _json['agencyId']
+		_description = _json['description']
+		_code = _json['code']
 		# validate the received values
 		if request.method == 'POST':
 			# save edits
