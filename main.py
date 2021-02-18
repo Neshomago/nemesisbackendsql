@@ -892,7 +892,7 @@ def delete_ItemEquipmentticket(id):
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor()
-		cursor.execute("DELETE FROM n_nemesis_n_equipment_model WHERE id=%s", id)
+		cursor.execute("DELETE FROM n_nemesis_n_equipment_model WHERE id=%s", (id,))
 		conn.commit()
 		resp = jsonify('Item from Additional equipment deleted successfully!')
 		resp.status_code = 200
