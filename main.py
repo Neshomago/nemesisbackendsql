@@ -512,6 +512,32 @@ def add_equipent():
 		cursor.close()
 		conn.close()
 
+# Update Equipment Data
+@app.route('/ticket-equip/update/<int:id>', methods=['POST'])
+def update_item(id):
+	try:
+		_json = request.json
+		_item = _json['item']
+		# _warehouse = _json['warehouseId']
+		_ticketId = _json['ticketId']
+		if request.method == 'POST':
+			sql = "UPDATE n_nemesis_n_equipment_model SET item = %s WHERE (id = %s AND ticketId =%s)"
+			data = (_item, id, _ticketId)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = jsonify('Item object updated correctly')
+			resp.status_code = 200
+			return resp
+		else:
+			return not_found()
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
 # get Equipment List from Ticket by ticketId METODO OK FINAL
 @app.route('/equipmentList/<int:ticketId>')
 def equipmentList(ticketId):
