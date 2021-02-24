@@ -954,6 +954,185 @@ def abort_ticket(id):
 		cursor.close()
 		conn.close()
 
+""" BLOQUE REFERENTE A WAREHOUSE Y TODAS SUS SOLICITUDES
+""" 
+
+@app.route('/warehouse/additem', methods=['POST'])
+def add_warehouseitem():
+	try:
+		_json = request.json
+		_name = _json['name']
+		_description = _json['description']
+		_serial = _json['serial']
+		_supplier= _json['supplier']
+		# _status = _json['status']
+		_warrantyPeriod = _json['warrantyPeriod']
+		_category = _json['category']
+		_statusDetails = _json['statusDetails']
+		# _technicianNotes = _json['technicianNotes']
+		_isMoving = _json['isMoving']
+		_isDeleted = _json['isDeleted']
+		_warehouseId = _json['warehouseId']
+		_isUsed = _json['isUsed']
+		_invoice_purchase = _json['invoice_purchase']
+		# _agencyId = _json['agencyId']
+		# validate the received values
+		if _name and request.method == 'POST':
+			# save edits
+			sql = 'INSERT INTO n_nemesis_n_equipment_model (item, item_description, item_serial, warehouseId, isUsed, warrantyPeriod, category, status_details,isMoving, supplier, isDeleted, invoice_purchase) VALUES(%s, %s, %s, %s, %s, %s, %s,%s, %s, %s, %s, %s)'
+			data = (_name, _description, _serial,_warehouseId,_isUsed,_warrantyPeriod,_category,_statusDetails,_isMoving, _supplier, _isDeleted,_invoice_purchase)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = jsonify('Tag added successfully!')
+			resp.status_code = 200
+			return resp
+		else:
+			return not_found()
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+# COMPLETE WAREHOUSE LIST
+@app.route('/warehousenames')
+def warehousenames():
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute('SELECT * FROM n_nemesis_n_warehouse_model')
+		rows = cursor.fetchall()
+		resp = jsonify(rows)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+# ITEM COMPLETE STOCK
+@app.route('/warehouseitemspertype')
+def witemspertype():
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute('SELECT name, description, isStack, minimumStack FROM n_nemesis_n_warehouseitemtype_model')
+		rows = cursor.fetchall()
+		resp = jsonify(rows)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+# Item Individual Info
+@app.route('/itemiso/<int:id>')
+def witeminfoindividual(id):
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute('SELECT * FROM n_nemesis_n_warehouseitemtype_model WHERE equipment=%s',id)
+		rows = cursor.fetchall()
+		resp = jsonify(rows)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+# Item from principal list- get Individual item List
+@app.route('/itemlist/<int:id>')
+def witeminfo(id):
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute('SELECT * FROM nemesis.n_nemesis_n_equipment_model,n_nemesis_n_warehouseitemtype_model WHERE item = n_nemesis_n_warehouseitemtype_model.name AND n_nemesis_n_warehouseitemtype_model.id = %s ORDER BY name, item_serial, TicketId DESC',id)
+		rows = cursor.fetchall()
+		resp = jsonify(rows)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+# ITEM SERIALIZED ITEMS
+@app.route('/warehouseserialitems')
+def wserialitems():
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute("SELECT * FROM n_nemesis_n_warehouseitem_model")
+		row = cursor.fetchone()
+		resp = jsonify(row)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+# ADD NEW ITEM TO WAREHOUSE 
+@app.route('/witem', methods=['POST'])
+def add_witem():
+	try:
+		_json = request.json
+		_name = _json['name']
+		_description = _json['description']
+		_type = _json['type']
+		_ids = _json['ids']
+		_version = _json['version']
+		# validate the received values
+		if _name and request.method == 'POST':
+			# save edits
+			sql = "UPDATE n_nemesis_n_tag_model SET name=%s, description=%s, type=%s, ids=%s, version=%s WHERE id=%s"
+			data = (_name, _description, _type, _ids, _version)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = jsonify('Tag updated successfully!')
+			resp.status_code = 200
+			return resp
+		else:
+			return not_found()
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+@app.route('/tag/delete/<string:name>')
+def delete_witem(name):
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor()
+		cursor.execute("DELETE FROM n_nemesis_n_warehouseitemtype_model WHERE name=%s", (name,))
+		conn.commit()
+		resp = jsonify('Tag deleted successfully!')
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+
+"""
+"""
+"""
+"""
+
 
 #
 #  Bloque de informacion de Usuarios
