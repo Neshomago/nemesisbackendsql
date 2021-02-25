@@ -1019,7 +1019,7 @@ def witemspertype():
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute('SELECT name, description, isStack, minimumStack FROM n_nemesis_n_warehouseitemtype_model')
+		cursor.execute('SELECT id, name, description, isStack, minimumStack FROM n_nemesis_n_warehouseitemtype_model')
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
