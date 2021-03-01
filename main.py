@@ -844,6 +844,113 @@ def update_ticketversion(id):
 		cursor.close()
 		conn.close()
 
+# REJECT TICKET for ticketing METODO OK FINAL
+@app.route('/ticketreject/<int:id>', methods=['POST'])
+def update_ticketreject(id):
+	try:
+		_json = request.json
+		_version = _json['version']
+		_status = _json['status']
+		_tech_assign = _json['tech_assign']
+		# validate the received values
+		if request.method == 'POST':
+			# save edits
+			sql = "UPDATE n_nemesis_n_ticket_model SET version=%s, status=%s, tech_assign=%s WHERE id=%s"
+			data = (_version, _status, _tech_assign, id)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = jsonify('Ticket rejected from technician. Status updated successfully!')
+			resp.status_code = 200
+			return resp
+		else:
+			return not_found()
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+# RESOLVED TICKET for ticketing METODO OK FINAL
+@app.route('/ticketresolved/<int:id>', methods=['POST'])
+def update_ticketresolved(id):
+	try:
+		_json = request.json
+		_version = _json['version']
+		_status = _json['status']
+		_assigned_tags = _json['assigned_tags']
+		# validate the received values
+		if request.method == 'POST':
+			# save edits
+			sql = "UPDATE n_nemesis_n_ticket_model SET version=%s, status=%s, assigned_tags=%s, closedDate=CURRENT_TIMESTAMP WHERE id=%s"
+			data = (_version, _status, _assigned_tags, id)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = jsonify('Ticket resolved, good work!. Status updated successfully!')
+			resp.status_code = 200
+			return resp
+		else:
+			return not_found()
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+
+# Item from Warehouse stock of product
+@app.route('/ticketcountopen')
+def ticketcountopen():
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute("SELECT status, COUNT(*) FROM n_nemesis_n_ticket_model AS A where (A.status = 'OPENED') GROUP BY status;")
+		row = cursor.fetchall()
+		resp = jsonify(row)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+# Item from Warehouse stock of product
+@app.route('/ticketcountworking')
+def ticketcountworking():
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute("SELECT status, COUNT(*) FROM n_nemesis_n_ticket_model AS A where (A.status = 'WORKING') GROUP BY status;")
+		row = cursor.fetchall()
+		resp = jsonify(row)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+# Item from Warehouse stock of product
+@app.route('/clientscount')
+def clientscount():
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute("SELECT COUNT(*) FROM n_nemesis_n_customer_model;")
+		row = cursor.fetchall()
+		resp = jsonify(row)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
 
 # Item from Warehouse stock of product
 @app.route('/ticketwarehouse')
@@ -1037,8 +1144,30 @@ def warehousecategory():
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		# CODIGO DE VER TODAS LAS CATEGORIAS
 		cursor.execute('SELECT * FROM n_nemesis_n_itemscategory_model')
+		#
+		#
+		#CODIGO CORRECTO DONDE CUENTO LAS EXISTENCIAS DE ESE ITEM SEGUN SU CATEGORIA
+		# cursor.execute('SELECT category_name, COUNT(*) FROM (n_nemesis_n_warehouseitem_model AS A, n_nemesis_n_itemscategory_model AS B) where (A.categoryId = B.id) GROUP BY category_name;')
 		# cursor.execute('INSERT INTO n_nemesis_n_itemscategory_model (category_name) SELECT (%s) WHERE NOT EXISTS(select category_name from n_nemesis_n_itemscategory_model Where category_name = %s) LIMIT 1')
+		rows = cursor.fetchall()
+		resp = jsonify(rows)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+@app.route('/warehousecategorycount', methods=['GET'])
+def warehousecategorycount():
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		#CODIGO CORRECTO DONDE CUENTO LAS EXISTENCIAS DE ESE ITEM SEGUN SU CATEGORIA
+		cursor.execute('SELECT category_name, COUNT(*) FROM (n_nemesis_n_warehouseitem_model AS A, n_nemesis_n_itemscategory_model AS B) where (A.categoryId = B.id) GROUP BY category_name;')
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
@@ -1083,7 +1212,7 @@ def witemspertype():
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute('SELECT id, name, description, isStack, minimumStack FROM n_nemesis_n_warehouseitemtype_model')
+		cursor.execute('SELECT * FROM n_nemesis_n_warehouseitemtype_model, n_nemesis_n_warehouseitem_model')
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
@@ -1134,7 +1263,10 @@ def witeminfo(id):
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute('SELECT * FROM nemesis.n_nemesis_n_equipment_model,n_nemesis_n_warehouseitemtype_model WHERE item = n_nemesis_n_warehouseitemtype_model.name AND n_nemesis_n_warehouseitemtype_model.id = %s ORDER BY name, item_serial, TicketId DESC',id)
+		# cursor.execute('SELECT * FROM nemesis.n_nemesis_n_equipment_model,n_nemesis_n_warehouseitemtype_model WHERE item = n_nemesis_n_warehouseitemtype_model.name AND n_nemesis_n_warehouseitemtype_model.id = %s ORDER BY name, item_serial, TicketId DESC',id)
+		# 
+		# CODIGO FUNCIONAL DE VISUALIZAR TODOS LOS ITEMS DE ESA CATEGORIA
+		cursor.execute('SELECT * FROM n_nemesis_n_warehouseitem_model AS A, n_nemesis_n_itemscategory_model AS B where A.categoryId = B.id AND B.id=%s', id)
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
