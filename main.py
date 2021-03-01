@@ -1036,19 +1036,24 @@ def delete_ItemEquipmentticket(id):
 		conn.close()
 
 #Consulta de Seriales y nombre item
-@app.route('/equipmentSerialCheck/<string:serial>', methods=['POST'])
-def serialchecker(serial):
+# @app.route('/equipmentSerialCheck/<string:serial>', methods=['POST'])
+@app.route('/equipmentSerialCheck/', methods=['POST'])
+def serialchecker():
 	try:
-		# _json = request.json
-		# _item_serial = _json['item_serial']
+		_json = request.json
+		_item_serial = _json['serial']
 		# _description = _json['description']
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute('SELECT * FROM nemesis.n_nemesis_n_equipment_model,n_nemesis_n_warehouseitemtype_model WHERE n_nemesis_n_warehouseitemtype_model.description = %s AND n_nemesis_n_warehouseitemtype_model.id = %s ORDER BY name, item_serial, TicketId DESC', _item_serial, _description)
+		cursor.execute('SELECT serial FROM n_nemesis_n_warehouseitem_model WHERE n_nemesis_n_warehouseitem_model.serial = %s', _item_serial)
 		rows = cursor.fetchall()
-		resp = jsonify(rows)
-		resp.status_code = 200
-		return resp
+		# resp = jsonify(rows)
+		# if (rows != 0 or rows != '' or rows = None):
+		# 	resp = "OK"
+		# else:
+		# 	resp = "NO"
+		# resp.status_code = 200
+		return rows
 	except Exception as e:
 		print(e)
 	finally:
