@@ -276,25 +276,24 @@ def contact(name):
 		cursor.close()
 		conn.close()
 
-@app.route('/contact/update', methods=['POST'])
-def update_contact():
+@app.route('/contact/update/<int:id>', methods=['POST'])
+def update_contact(id):
 	try:
-		_json = request.json
 		_json = request.json
 		_name = _json['name']
 		_surname = _json['surname']
 		_taxCode = _json['taxCode']
 		_address = _json['address']
 		_phone = _json['phone']
-		_user = _json['user']
-		_customerId = _json['customerId']
-		_ids = _json['ids']
-		_version = _json['version']
+		# _user = _json['user']
+		# _customerId = _json['customerId']
+		# _ids = _json['ids']
+		# _version = _json['version']
 		# validate the received values
 		if _name and request.method == 'POST':
 			# save edits
-			sql = "UPDATE n_nemesis_n_contact_model SET name=%s, surname=%s, taxCode=%s, address=%s, phone=%s, user=%s, customerId=%s, ids=%s, version=%s WHERE id=%s"
-			data = (_name, _surname, _taxCode, _address, _phone, _user, _customerId, _ids, _version)
+			sql = "UPDATE n_nemesis_n_contact_model SET name=%s, surname=%s, taxCode=%s, address=%s, phone=%s WHERE id=%s"
+			data = (_name, _surname, _taxCode, _address, _phone,  id)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
@@ -635,7 +634,7 @@ def update_technician(id):
 		cursor.close()
 		conn.close()
 
-#
+# 
 #  Bloque de informacion de tags
 #
 
@@ -913,7 +912,7 @@ def update_ticketdata(id):
 
 
 # Elemento de ticket eliminar
-@app.route('/ticket-equip/del/<int:id>')
+@app.route('/ticket-equip/del/<int:id>', methods=['GET'])
 def delete_ItemEquipmentticket(id):
 	try:
 		conn = mysql.connect()
@@ -929,6 +928,25 @@ def delete_ItemEquipmentticket(id):
 		cursor.close()
 		conn.close()
 
+#Consulta de Seriales y nombre item
+@app.route('/equipmentSerialCheck/<string:serial>', methods=['POST'])
+def serialchecker(serial):
+	try:
+		# _json = request.json
+		# _item_serial = _json['item_serial']
+		# _description = _json['description']
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute('SELECT * FROM nemesis.n_nemesis_n_equipment_model,n_nemesis_n_warehouseitemtype_model WHERE n_nemesis_n_warehouseitemtype_model.description = %s AND n_nemesis_n_warehouseitemtype_model.id = %s ORDER BY name, item_serial, TicketId DESC', _item_serial, _description)
+		rows = cursor.fetchall()
+		resp = jsonify(rows)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
 
 # Abort Ticket
 @app.route('/ticket/abort/<int:id>', methods=['POST'])
@@ -965,22 +983,22 @@ def add_warehouseitem():
 		_description = _json['description']
 		_serial = _json['serial']
 		_supplier= _json['supplier']
-		# _status = _json['status']
+		_category = _json['categoryId']
+		_status = _json['status']
 		_warrantyPeriod = _json['warrantyPeriod']
-		_category = _json['category']
-		_statusDetails = _json['statusDetails']
+		# _statusDetails = _json['statusDetails']
 		# _technicianNotes = _json['technicianNotes']
-		_isMoving = _json['isMoving']
+		# _isMoving = _json['isMoving']
 		_isDeleted = _json['isDeleted']
 		_warehouseId = _json['warehouseId']
 		_isUsed = _json['isUsed']
 		_invoice_purchase = _json['invoice_purchase']
 		# _agencyId = _json['agencyId']
 		# validate the received values
-		if _name and request.method == 'POST':
+		if request.method == 'POST':
 			# save edits
-			sql = 'INSERT INTO n_nemesis_n_equipment_model (item, item_description, item_serial, warehouseId, isUsed, warrantyPeriod, category, status_details,isMoving, supplier, isDeleted, invoice_purchase) VALUES(%s, %s, %s, %s, %s, %s, %s,%s, %s, %s, %s, %s)'
-			data = (_name, _description, _serial,_warehouseId,_isUsed,_warrantyPeriod,_category,_statusDetails,_isMoving, _supplier, _isDeleted,_invoice_purchase)
+			sql = 'INSERT INTO n_nemesis_n_warehouseitem_model (name, description, serial, categoryId, status, warehouseId, used, supplierId, warranty_period, warranty_invoiceId, isDelete) VALUES(%s, %s, %s, %s, %s, %s, %s,%s, %s, %s, %s)'
+			data = (_name, _description, _serial, _category,  _status, _warehouseId,_isUsed, _supplier,_warrantyPeriod,_invoice_purchase, _isDeleted)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
@@ -1013,6 +1031,52 @@ def warehousenames():
 		cursor.close()
 		conn.close()
 
+# Category WAREHOUSE LIST
+@app.route('/warehousecategory', methods=['GET','POST'])
+def warehousecategory():
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute('SELECT * FROM n_nemesis_n_itemscategory_model')
+		# cursor.execute('INSERT INTO n_nemesis_n_itemscategory_model (category_name) SELECT (%s) WHERE NOT EXISTS(select category_name from n_nemesis_n_itemscategory_model Where category_name = %s) LIMIT 1')
+		rows = cursor.fetchall()
+		resp = jsonify(rows)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+
+@app.route('/warehousecategory/add', methods=['POST'])
+def warehousecategoryadd():
+	try:
+		_json = request.json
+		_category = _json['category_name']
+
+		if request.method == 'POST':
+			sql = "INSERT INTO n_nemesis_n_itemscategory_model (category_name) SELECT (%s) WHERE NOT EXISTS(select category_name from n_nemesis_n_itemscategory_model Where category_name = %s) LIMIT 1"
+			data = (_category, _category)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = jsonify('New category added succesfully')
+			resp.status_code = 200
+			return resp
+		else:
+			return not_found()
+			err_msg = 'Category could not be added.'
+			return err_msg
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+
 # ITEM COMPLETE STOCK
 @app.route('/warehouseitemspertype')
 def witemspertype():
@@ -1030,13 +1094,30 @@ def witemspertype():
 		cursor.close()
 		conn.close()
 
+# ITEM COMPLETE STOCK
+@app.route('/warehouseitems')
+def witemsmodel():
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute('SELECT * FROM n_nemesis_n_warehouseitem_model')
+		rows = cursor.fetchall()
+		resp = jsonify(rows)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
 # Item Individual Info
 @app.route('/itemiso/<int:id>')
 def witeminfoindividual(id):
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute('SELECT * FROM n_nemesis_n_warehouseitemtype_model WHERE equipment=%s',id)
+		cursor.execute('SELECT * FROM n_nemesis_n_warehouseitem_model WHERE id=%s',id)
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
@@ -1232,7 +1313,7 @@ def update_user():
 			_hashed_password = generate_password_hash(_password)
 			# save edits
 			sql = "UPDATE tbl_user SET user_name=%s, user_email=%s, user_password=%s WHERE user_id=%s"
-			data = (_name, _email, _hashed_password, _id,)
+			data = (_name, _email, _hashed_password, _id)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
