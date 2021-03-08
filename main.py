@@ -3,6 +3,10 @@ from app import app
 from db_config import mysql
 from flask import jsonify
 from flask import flash, request
+#Begin Import from https://github.com/teamsoo/flask-api-upload-image/blob/master/server.py
+from flask import Flask, url_for, send_from_directory, request
+import logging, os
+# end of upload import
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 
@@ -1084,8 +1088,8 @@ def abort_ticket(id):
 		cursor.close()
 		conn.close()
 
-""" BLOQUE REFERENTE A WAREHOUSE Y TODAS SUS SOLICITUDES
-""" 
+# BLOQUE REFERENTE A WAREHOUSE Y TODAS SUS SOLICITUDES
+# 
 
 @app.route('/warehouse/additem', methods=['POST'])
 def add_warehouseitem():
@@ -1116,6 +1120,36 @@ def add_warehouseitem():
 			cursor.execute(sql, data)
 			conn.commit()
 			resp = jsonify('Tag added successfully!')
+			resp.status_code = 200
+			return resp
+		else:
+			return not_found()
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+# Actualizar Nuevo Técnico METODO OK FINAL
+@app.route('/warehouseitemup/<int:id>', methods=['POST'])
+def update_warehouseitem(id):
+	try:
+		_json = request.json
+		_serial = _json['serial']
+		_activation = _json['activation']
+		_warehouseId = _json['warehouseId']
+		_used = _json['used']
+		_location = _json['location']
+		_status = _json['status']
+		_statusDescription = _json['statusDescription']
+		if request.method == 'POST':
+			sql = "UPDATE n_nemesis_n_warehouseitem_model SET serial = %s, activation =%s, warehouseId = %s, used =%s, location=%s,status=%s,statusDescription=%s WHERE id=%s"
+			data = (_serial, _activation,_warehouseId,_used,_location,_status,_statusDescription, id)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = jsonify('Item updated Correctly.')
 			resp.status_code = 200
 			return resp
 		else:
@@ -1346,10 +1380,36 @@ def delete_witem(name):
 		conn.close()
 
 
-"""
-"""
-"""
-"""
+#
+# Image Upload api code
+#
+
+PROJECT_HOME = os.path.dirname(os.path.realpath(__file__))
+UPLOAD_FOLDER = '{}/uploads/'.format(PROJECT_HOME)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+# ALLOWED_EXT ={"jpg","jpeg","png", "pdf"}
+# def check_file(file):
+# 	return '.' in file and file.rsplit('.',1)[1].lower() in ALLOWED_EXT
+def create_new_folder(local_dir):
+    newpath = local_dir
+    if not os.path.exists(newpath):
+        os.makedirs(newpath)
+    return newpath
+
+@app.route('/uploadimage', methods = ['POST'])
+def api_root():
+    app.logger.info(PROJECT_HOME)
+    if request.method == 'POST' and request.files['image']:
+    	app.logger.info(app.config['UPLOAD_FOLDER'])
+    	img = request.files['image']
+    	img_name = (img.filename)
+    	create_new_folder(app.config['UPLOAD_FOLDER'])
+    	saved_path = os.path.join(app.config['UPLOAD_FOLDER'], img_name)
+    	app.logger.info("saving {}".format(saved_path))
+    	img.save(saved_path)
+    	return send_from_directory(app.config['UPLOAD_FOLDER'],img_name, as_attachment=True)
+    else:
+    	return "Where is the image?"
 
 
 #
