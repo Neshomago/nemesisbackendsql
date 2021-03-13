@@ -69,7 +69,7 @@ def agencys_per_client():
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute('SELECT * FROM n_nemesis_n_agency_model WHERE certification NOT LIKE %disinstallato% ORDER BY id DESC')
+		cursor.execute('SELECT * FROM n_nemesis_n_agency_model WHERE certification NOT LIKE %%disinstallato%% ORDER BY id DESC')
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
@@ -144,8 +144,8 @@ def agency(name):
 		cursor.close()
 		conn.close()
 
-@app.route('/agency/update', methods=['POST'])
-def update_agency():
+@app.route('/agency/update/<int:id>', methods=['POST'])
+def update_agency(id):
 	try:
 		_json = request.json
 		_name = _json['name']
@@ -155,15 +155,15 @@ def update_agency():
 		_email = _json['email']
 		_phone = _json['phone']
 		_certification = _json['certification']
-		_customerId = _json['customerId']
+		# _customerId = _json['customerId']
 		_moreInfo = _json['moreInfo']
-		_ids = _json['ids']
-		_version = _json['version']
+		# _ids = _json['ids']
+		# _version = _json['version']
 		# validate the received values
-		if _name and _email and request.method == 'POST':
+		if request.method == 'POST':
 			# save edits
-			sql = "UPDATE n_nemesis_n_agency_model SET name=%s, address=%s, managerId=%s, vat=%s, mail=%s, phone=%s, certification=%s, customerId=%s, moreInfo=%s, ids=%s, version=%s WHERE id=%s"
-			data = (_name, _address, _managerId, _vat, _email, _phone, _certification, _customerId, _moreInfo, _ids, _version)
+			sql = "UPDATE n_nemesis_n_agency_model SET name=%s, address=%s, managerId=%s, vat=%s, email=%s, phone=%s, certification=%s, moreInfo=%s WHERE id=%s"
+			data = (_name, _address, _managerId, _vat, _email, _phone, _certification, _moreInfo, id)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
@@ -199,6 +199,7 @@ def delete_agency(name):
 #  Bloque de informacion de contacts
 #
 
+#Metodo Ok Final
 @app.route('/contact/add', methods=['POST'])
 def add_contact():
 	try:
@@ -208,15 +209,14 @@ def add_contact():
 		_taxCode = _json['taxCode']
 		_address = _json['address']
 		_phone = _json['phone']
-		_user = _json['user']
+		_email = _json['email']
 		_customerId = _json['customerId']
-		_ids = _json['ids']
 		_version = _json['version']
 		# validate the received values
 		if _name and request.method == 'POST':
 			# save edits
-			sql = "INSERT INTO n_nemesis_n_contact_model (name, surname, taxCode, address, phone, user, customerId, ids, version) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
-			data = (_name, _surname, _taxCode, _address, _phone, _user, _customerId, _ids, _version)
+			sql = "INSERT INTO n_nemesis_n_contact_model (name, surname, taxCode, address, phone, email, customerId, version) VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"
+			data = (_name, _surname, _taxCode, _address, _phone, _email, _customerId, _version)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
@@ -232,6 +232,7 @@ def add_contact():
 		cursor.close()
 		conn.close()
 
+#Metodo OK Final
 @app.route('/contact')
 def contacts():
 	try:
@@ -248,6 +249,7 @@ def contacts():
 		cursor.close()
 		conn.close()
 
+#Metodo OK Final
 @app.route('/contactiso/<int:id>')
 def contactIso(id):
 	try:
@@ -280,6 +282,7 @@ def contact(name):
 		cursor.close()
 		conn.close()
 
+# Metodo OK Final
 @app.route('/contact/update/<int:id>', methods=['POST'])
 def update_contact(id):
 	try:
@@ -288,6 +291,7 @@ def update_contact(id):
 		_surname = _json['surname']
 		_taxCode = _json['taxCode']
 		_address = _json['address']
+		_email = _json['email']
 		_phone = _json['phone']
 		# _user = _json['user']
 		# _customerId = _json['customerId']
@@ -296,8 +300,8 @@ def update_contact(id):
 		# validate the received values
 		if _name and request.method == 'POST':
 			# save edits
-			sql = "UPDATE n_nemesis_n_contact_model SET name=%s, surname=%s, taxCode=%s, address=%s, phone=%s WHERE id=%s"
-			data = (_name, _surname, _taxCode, _address, _phone,  id)
+			sql = "UPDATE n_nemesis_n_contact_model SET name=%s, surname=%s, taxCode=%s, address=%s, email=%s, phone=%s WHERE id=%s"
+			data = (_name, _surname, _taxCode, _address, _email, _phone,  id)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
@@ -336,6 +340,8 @@ def delete_contact(name):
 """
 BLOQUE DE CLIENTES / CUSTOMERS
 """
+
+#Metodo OK final
 @app.route('/customer/add', methods=['POST'])
 def add_customer():
 	try:
@@ -417,8 +423,8 @@ def customer(name):
 		cursor.close()
 		conn.close()
 
-@app.route('/customer/update', methods=['POST'])
-def update_customer():
+@app.route('/customer/update/<int:id>', methods=['POST'])
+def update_customer(id):
 	try:
 		_json = request.json
 		_name = _json['name']
@@ -426,13 +432,11 @@ def update_customer():
 		_vat = _json['vat']
 		_email = _json['email']
 		_phone = _json['phone']
-		_ids = _json['ids']
-		_version = _json['version']
 		# validate the received values
-		if _name and _email and request.method == 'POST':
+		if request.method == 'POST':
 			# save edits
-			sql = "UPDATE n_nemesis_n_customer_model SET name=%s, address=%s, vat=%s, mail=%s, phone=%s, ids=%s, version=%s WHERE id=%s"
-			data = (_name, _address, _vat, _email, _phone, _ids, _version)
+			sql = "UPDATE n_nemesis_n_customer_model SET name=%s, address=%s, vat=%s, email=%s, phone=%s WHERE id=%s"
+			data = (_name, _address, _vat, _email, _phone, id)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
@@ -1041,23 +1045,16 @@ def delete_ItemEquipmentticket(id):
 
 #Consulta de Seriales y nombre item
 # @app.route('/equipmentSerialCheck/<string:serial>', methods=['POST'])
-@app.route('/equipmentSerialCheck/', methods=['POST'])
+@app.route('/equipmentSerialCheck/', methods=['GET'])
 def serialchecker():
 	try:
-		_json = request.json
-		_item_serial = _json['serial']
-		# _description = _json['description']
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute('SELECT serial FROM n_nemesis_n_warehouseitem_model WHERE n_nemesis_n_warehouseitem_model.serial = %s', _item_serial)
+		cursor.execute('SELECT serial FROM n_nemesis_n_warehouseitem_model')
 		rows = cursor.fetchall()
-		# resp = jsonify(rows)
-		# if (rows != 0 or rows != '' or rows = None):
-		# 	resp = "OK"
-		# else:
-		# 	resp = "NO"
-		# resp.status_code = 200
-		return rows
+		resp = jsonify(rows)
+		resp.status_code = 200
+		return resp
 	except Exception as e:
 		print(e)
 	finally:
@@ -1088,8 +1085,13 @@ def abort_ticket(id):
 		cursor.close()
 		conn.close()
 
-# BLOQUE REFERENTE A WAREHOUSE Y TODAS SUS SOLICITUDES
-# 
+##
+##
+## BLOQUE REFERENTE A WAREHOUSE Y TODAS SUS SOLICITUDES
+## Añadir items, actualizar, Nombres de bodegas, categorias, item por tipo
+##
+##
+##
 
 @app.route('/warehouse/additem', methods=['POST'])
 def add_warehouseitem():
@@ -1110,16 +1112,21 @@ def add_warehouseitem():
 		_isUsed = _json['isUsed']
 		_invoice_purchase = _json['invoice_purchase']
 		# _agencyId = _json['agencyId']
+		_userId= -_json['userId']
+		_changes = _json['changes']
+		_type = _json['type']
+		_descriptionTrack = _json['descriptionTrack']
 		# validate the received values
 		if request.method == 'POST':
 			# save edits
-			sql = 'INSERT INTO n_nemesis_n_warehouseitem_model (name, description, serial, categoryId, status, warehouseId, used, supplierId, warranty_period, warranty_invoiceId, isDelete) VALUES(%s, %s, %s, %s, %s, %s, %s,%s, %s, %s, %s)'
-			data = (_name, _description, _serial, _category,  _status, _warehouseId,_isUsed, _supplier,_warrantyPeriod,_invoice_purchase, _isDeleted)
+			sql = 'INSERT INTO n_nemesis_n_warehouseitem_model (name, description, serial, categoryId, status, warehouseId, used, supplierId, warranty_period, warranty_invoiceId, isDelete) VALUES(%s, %s, %s, %s, %s, %s, %s,%s, %s, %s, %s);\
+					INSERT INTO n_nemesis_n_warehousetracking_model (date, itemId, userId, changes, type, descriptionTrack, rawData, version, userTraza) VALUES(CURRENT_TIMESTAMP, %s, %s, %s, %s, %s,"", 1, 3);'
+			data = (_name, _description, _serial, _category, _status, _warehouseId, _isUsed, _supplier, _warrantyPeriod, _invoice_purchase, _isDeleted, _serial, _userId, _changes, _type, _descriptionTrack)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
 			conn.commit()
-			resp = jsonify('Tag added successfully!')
+			resp = jsonify('Item added successfully!')
 			resp.status_code = 200
 			return resp
 		else:
@@ -1184,7 +1191,7 @@ def warehousecategory():
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
 		# CODIGO DE VER TODAS LAS CATEGORIAS
-		cursor.execute('SELECT * FROM n_nemesis_n_itemscategory_model')
+		cursor.execute('SELECT * FROM n_nemesis_n_itemscategory_model ORDER BY category_name ASC')
 		#
 		#
 		#CODIGO CORRECTO DONDE CUENTO LAS EXISTENCIAS DE ESE ITEM SEGUN SU CATEGORIA
@@ -1217,16 +1224,79 @@ def warehousecategorycount():
 		cursor.close()
 		conn.close()
 
+# ITEM TRACKING
+@app.route('/warehouseitemtrack', methods=['GET'])
+def warehousetrackingget(serial):
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute('SELECT * n_nemesis_n_warehousetracking_model WHERE itemId = %s', serial)
+		rows = cursor.fetchall()
+		resp = jsonify(rows)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+
+@app.route('/warehouseitemtrack', methods=['POST'])
+def warehousetrackingupdate(serial):
+	try:
+		_json = request.json
+		_name = _json['name']
+		_description = _json['description']
+		_serial = _json['serial']
+		_supplier= _json['supplier']
+		_category = _json['categoryId']
+		_status = _json['status']
+		_warrantyPeriod = _json['warrantyPeriod']
+		# _statusDetails = _json['statusDetails']
+		# _technicianNotes = _json['technicianNotes']
+		# _isMoving = _json['isMoving']
+		_isDeleted = _json['isDeleted']
+		_warehouseId = _json['warehouseId']
+		_isUsed = _json['isUsed']
+		_invoice_purchase = _json['invoice_purchase']
+		# _agencyId = _json['agencyId']
+		_userId= -_json['userId']
+		_changes = _json['changes']
+		_type = _json['type']
+		_descriptionTrack = _json['descriptionTrack']
+		# validate the received values
+		if _name and request.method == 'POST':
+			# save edits
+			data =('INSERT INTO n_nemesis_n_warehousetracking_model (date, itemId, userId, changes, type, descriptionTrack, rawData, version, userTraza) \
+				VALUES(CURRENT_TIMESTAMP, %s, %s, %s, %s, %s,"", 1, 3);')
+			data = ()
+			sql = "UPDATE n_nemesis_n_tag_model SET name=%s, description=%s, type=%s, ids=%s, version=%s WHERE id=%s"
+			data = (_name, _description, _type, _ids, _version)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = jsonify('Tag updated successfully!')
+			resp.status_code = 200
+			return resp
+		else:
+			return not_found()
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
 
 @app.route('/warehousecategory/add', methods=['POST'])
 def warehousecategoryadd():
 	try:
 		_json = request.json
 		_category = _json['category_name']
-
 		if request.method == 'POST':
 			sql = "INSERT INTO n_nemesis_n_itemscategory_model (category_name) SELECT (%s) WHERE NOT EXISTS(select category_name from n_nemesis_n_itemscategory_model Where category_name = %s) LIMIT 1"
-			data = (_category, _category)
+			data = (_category)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
@@ -1420,16 +1490,20 @@ def api_root():
 def add_user():
 	try:
 		_json = request.json
-		_name = _json['name']
 		_email = _json['email']
-		_password = _json['pwd']
+		_password = _json['password']
+		_RoleA = _json['RoleA']
+		_RoleE = _json['RoleE']
+		_RoleC = _json['RoleC']
+		_RoleT = _json['RoleT']
+		_version = 1
 		# validate the received values
-		if _name and _email and _password and request.method == 'POST':
+		if _email and _password and request.method == 'POST':
 			#do not save password as a plain text
 			_hashed_password = generate_password_hash(_password)
 			# save edits
-			sql = "INSERT INTO tbl_user(user_name, user_email, user_password) VALUES(%s, %s, %s)"
-			data = (_name, _email, _hashed_password)
+			sql = "INSERT INTO n_nemesis_users_user_model (email, password, version, RoleA, RoleE, RoleC, RoleT) VALUES(%s, %s, %s, %s, %s, %s, %s)"
+			data = (_email, _hashed_password, _version, _RoleA, _RoleE, _RoleC, _RoleT)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
@@ -1445,6 +1519,25 @@ def add_user():
 		cursor.close()
 		conn.close()
 
+##LOGIN
+@app.route('/user/mail', methods=['POST'])
+def usermail():
+	try:
+		_json = request.json
+		_mail = _json['usermail']
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute("SELECT a.id, a.email, a.RoleA, a.RoleC, a.RoleE, a.RoleT, b.name, b.surname, b.address, b.phone \
+			 FROM n_nemesis_users_user_model a, n_nemesis_n_contact_model b WHERE a.email=%s and a.email = b.email", _mail)
+		row = cursor.fetchone()
+		resp = jsonify(row)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
 
 ### Busqueda de tecnicos Metodo OK FINAL
 @app.route('/techn')
