@@ -1119,9 +1119,8 @@ def add_warehouseitem():
 		# validate the received values
 		if request.method == 'POST':
 			# save edits
-			sql = 'INSERT INTO n_nemesis_n_warehouseitem_model (name, description, serial, categoryId, status, warehouseId, used, supplierId, warranty_period, warranty_invoiceId, isDelete) VALUES(%s, %s, %s, %s, %s, %s, %s,%s, %s, %s, %s);\
-					INSERT INTO n_nemesis_n_warehousetracking_model (date, itemId, userId, changes, type, descriptionTrack, rawData, version, userTraza) VALUES(CURRENT_TIMESTAMP, %s, %s, %s, %s, %s,"", 1, 3);'
-			data = (_name, _description, _serial, _category, _status, _warehouseId, _isUsed, _supplier, _warrantyPeriod, _invoice_purchase, _isDeleted, _serial, _userId, _changes, _type, _descriptionTrack)
+			sql = 'INSERT INTO n_nemesis_n_warehouseitem_model (name, description, serial, categoryId, status, warehouseId, used, supplierId, warranty_period, warranty_invoiceId, isDelete) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+			data = (_name, _description, _serial, _category, _status, _warehouseId, _isUsed, _supplier, _warrantyPeriod, _invoice_purchase, _isDeleted)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
@@ -1150,13 +1149,43 @@ def update_warehouseitem(id):
 		_status = _json['status']
 		_statusDescription = _json['statusDescription']
 		if request.method == 'POST':
-			sql = "UPDATE n_nemesis_n_warehouseitem_model SET serial = %s, activation =%s, warehouseId = %s, used =%s, location=%s,status=%s,statusDescription=%s WHERE id=%s"
+			sql = "UPDATE n_nemesis_n_warehouseitem_model SET serial=%s, activation=%s, warehouseId = %s, used=%s, location=%s, status=%s, statusDescription=%s WHERE id=%s"
 			data = (_serial, _activation,_warehouseId,_used,_location,_status,_statusDescription, id)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
 			conn.commit()
 			resp = jsonify('Item updated Correctly.')
+			resp.status_code = 200
+			return resp
+		else:
+			return not_found()
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+#ITEM Tracking info Post
+@app.route('/warehouse/itemtracking', methods=['POST'])
+def add_warehouseitemtracking():
+	try:
+		_json = request.json
+		_serial = _json['serial']
+		_userId= -_json['userId']
+		_changes = _json['changes']
+		_type = _json['type']
+		_descriptionTrack = _json['descriptionTrack']
+		# validate the received values
+		if request.method == 'POST':
+			# save edits
+			sql = 'INSERT INTO n_nemesis_n_warehousetracking_model (itemId, userId, changes, type, descriptionTrack) VALUES(%s, %s, %s, %s, %s)'
+			data = (_serial, _userId, _changes, _type, _descriptionTrack)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = jsonify('Item track info added successfully!')
 			resp.status_code = 200
 			return resp
 		else:
@@ -1225,12 +1254,12 @@ def warehousecategorycount():
 		conn.close()
 
 # ITEM TRACKING
-@app.route('/warehouseitemtrack', methods=['GET'])
+@app.route('/warehouse/tracking', methods=['GET'])
 def warehousetrackingget(serial):
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute('SELECT * n_nemesis_n_warehousetracking_model WHERE itemId = %s', serial)
+		cursor.execute('SELECT * n_nemesis_n_warehousetracking_model WHERE itemId=%s', serial)
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
@@ -1314,6 +1343,31 @@ def warehousecategoryadd():
 		cursor.close()
 		conn.close()
 
+#Warehouse category Stock Update
+@app.route('/warehousecategory/stockppdate/<int:id>', methods=['POST'])
+def warehousecategoryadd(id):
+	try:
+		_json = request.json
+		_minimumStock = _json['minimumStock']
+		if request.method == 'POST':
+			sql = "UPDATE n_nemesis_n_itemscategory_model (minimumStock) SELECT (%s) WHERE id=%s"
+			data = (_minimumStock, id)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = jsonify('New category added succesfully')
+			resp.status_code = 200
+			return resp
+		else:
+			return not_found()
+			err_msg = 'Category could not be added.'
+			return err_msg
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
 
 # ITEM COMPLETE STOCK
 @app.route('/warehouseitemspertype')
