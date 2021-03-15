@@ -179,16 +179,25 @@ def update_agency(id):
 		cursor.close()
 		conn.close()
 
-@app.route('/agency/delete/<string:name>')
-def delete_agency(name):
+@app.route('/agency/delete/<int:id>', methods=['POST'])
+def delete_agency(id):
 	try:
-		conn = mysql.connect()
-		cursor = conn.cursor()
-		cursor.execute("DELETE FROM n_nemesis_n_agency_model WHERE name=%s", (name,))
-		conn.commit()
-		resp = jsonify('Agency deleted successfully!')
-		resp.status_code = 200
-		return resp
+		_json = request.json
+		_isDelete = _json['isDelete']
+		# validate the received values
+		if request.method == 'POST':
+			# save edits
+			sql = 'UPDATE n_nemesis_n_agency_model SET isDelete=%s WHERE id=%s'
+			data = (_isDelete, id)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = jsonify('Agency Deleted successfully!')
+			resp.status_code = 200
+			return resp
+		else:
+			return not_found()
 	except Exception as e:
 		print(e)
 	finally:
@@ -317,16 +326,23 @@ def update_contact(id):
 		cursor.close()
 		conn.close()
 
-@app.route('/contact/delete/<string:name>')
-def delete_contact(name):
+@app.route('/contact/delete/<int:id>')
+def delete_contact(id):
 	try:
-		conn = mysql.connect()
-		cursor = conn.cursor()
-		cursor.execute("DELETE FROM n_nemesis_n_contact_model WHERE name=%s", (name,))
-		conn.commit()
-		resp = jsonify('Contact deleted successfully!')
-		resp.status_code = 200
-		return resp
+		_json = request.json
+		_isDelete = _json['isDelete']
+		if request.method == 'POST':
+			sql = 'UPDATE n_nemesis_n_contact_model SET isDelete=%s WHERE id=%s'
+			data = (_isDelete, id)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql,data)
+			conn.commit()
+			resp = jsonify('Contact deleted successfully!')
+			resp.status_code = 200
+			return resp
+		else:
+			return not_found()
 	except Exception as e:
 		print(e)
 	finally:
@@ -452,16 +468,23 @@ def update_customer(id):
 		cursor.close()
 		conn.close()
 
-@app.route('/customer/delete/<string:name>')
-def delete_customer(name):
+@app.route('/customer/delete/<int:id>', methods=['POST'])
+def delete_customer(id):
 	try:
-		conn = mysql.connect()
-		cursor = conn.cursor()
-		cursor.execute("DELETE FROM n_nemesis_n_customer_model WHERE name=%s", (name,))
-		conn.commit()
-		resp = jsonify('Customer deleted successfully!')
-		resp.status_code = 200
-		return resp
+		_json = request.json
+		_isDelete = _json['isDelete']
+		if request.method == 'POST':
+			sql = 'UPDATE n_nemesis_n_customer_model SET isDelete=%s WHERE id=%s'
+			data = (_isDelete, id)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql,data)
+			conn.commit()
+			resp = jsonify('Customer deleted successfully!')
+			resp.status_code = 200
+			return resp
+		else:
+			return not_found()
 	except Exception as e:
 		print(e)
 	finally:
@@ -1107,7 +1130,7 @@ def add_warehouseitem():
 		# _statusDetails = _json['statusDetails']
 		# _technicianNotes = _json['technicianNotes']
 		# _isMoving = _json['isMoving']
-		_isDeleted = _json['isDeleted']
+		_isDelete = _json['isDelete']
 		_warehouseId = _json['warehouseId']
 		_isUsed = _json['isUsed']
 		_invoice_purchase = _json['invoice_purchase']
@@ -1120,7 +1143,7 @@ def add_warehouseitem():
 		if request.method == 'POST':
 			# save edits
 			sql = 'INSERT INTO n_nemesis_n_warehouseitem_model (name, description, serial, categoryId, status, warehouseId, used, supplierId, warranty_period, warranty_invoiceId, isDelete) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
-			data = (_name, _description, _serial, _category, _status, _warehouseId, _isUsed, _supplier, _warrantyPeriod, _invoice_purchase, _isDeleted)
+			data = (_name, _description, _serial, _category, _status, _warehouseId, _isUsed, _supplier, _warrantyPeriod, _invoice_purchase, _isDelete)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
@@ -1179,13 +1202,39 @@ def add_warehouseitemtracking():
 		# validate the received values
 		if request.method == 'POST':
 			# save edits
-			sql = 'INSERT INTO n_nemesis_n_warehousetracking_model (itemId, userId, changes, type, descriptionTrack) VALUES(%s, %s, %s, %s, %s)'
+			sql = 'INSERT INTO n_nemesis_n_warehousetracking_model (itemId, userId, changes, type, descriptionTrack) VALUES (%s, %s, %s, %s, %s)'
 			data = (_serial, _userId, _changes, _type, _descriptionTrack)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
 			conn.commit()
 			resp = jsonify('Item track info added successfully!')
+			resp.status_code = 200
+			return resp
+		else:
+			return not_found()
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+
+@app.route('/warehouse/itemdelete/<int:id>', methods=['POST'])
+def delete_warehouseitem(id):
+	try:
+		_json = request.json
+		_isDelete = _json['isDelete']
+		# validate the received values
+		if request.method == 'POST':
+			# save edits
+			sql = 'UPDATE n_nemesis_n_warehouseitem_model SET isDelete=%s WHERE id=%s'
+			data = (_isDelete, id)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = jsonify('Item Deleted successfully!')
 			resp.status_code = 200
 			return resp
 		else:
@@ -1254,12 +1303,12 @@ def warehousecategorycount():
 		conn.close()
 
 # ITEM TRACKING
-@app.route('/warehouse/tracking', methods=['GET'])
-def warehousetrackingget(serial):
+@app.route('/warehouse/tracking/<int:id>', methods=['GET'])
+def warehousetrackingget(id):
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute('SELECT * n_nemesis_n_warehousetracking_model WHERE itemId=%s', serial)
+		cursor.execute('SELECT * FROM n_nemesis_n_warehousetracking_model WHERE itemId=%s', id)
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
@@ -1275,38 +1324,27 @@ def warehousetrackingget(serial):
 def warehousetrackingupdate(serial):
 	try:
 		_json = request.json
-		_name = _json['name']
-		_description = _json['description']
+		# _name = _json['name']
+		# _description = _json['description']
 		_serial = _json['serial']
-		_supplier= _json['supplier']
-		_category = _json['categoryId']
-		_status = _json['status']
-		_warrantyPeriod = _json['warrantyPeriod']
 		# _statusDetails = _json['statusDetails']
 		# _technicianNotes = _json['technicianNotes']
 		# _isMoving = _json['isMoving']
-		_isDeleted = _json['isDeleted']
-		_warehouseId = _json['warehouseId']
-		_isUsed = _json['isUsed']
-		_invoice_purchase = _json['invoice_purchase']
 		# _agencyId = _json['agencyId']
 		_userId= -_json['userId']
 		_changes = _json['changes']
 		_type = _json['type']
 		_descriptionTrack = _json['descriptionTrack']
 		# validate the received values
-		if _name and request.method == 'POST':
+		if request.method == 'POST':
 			# save edits
-			data =('INSERT INTO n_nemesis_n_warehousetracking_model (date, itemId, userId, changes, type, descriptionTrack, rawData, version, userTraza) \
-				VALUES(CURRENT_TIMESTAMP, %s, %s, %s, %s, %s,"", 1, 3);')
-			data = ()
-			sql = "UPDATE n_nemesis_n_tag_model SET name=%s, description=%s, type=%s, ids=%s, version=%s WHERE id=%s"
-			data = (_name, _description, _type, _ids, _version)
+			sql = 'INSERT INTO n_nemesis_n_warehousetracking_model (itemId, userId, changes, type, descriptionTrack) VALUES(%s, %s, %s, %s, %s)'
+			data = (_serial, _userId, _changes, _type, _descriptionTrack)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
 			conn.commit()
-			resp = jsonify('Tag updated successfully!')
+			resp = jsonify('Track Data updated successfully!')
 			resp.status_code = 200
 			return resp
 		else:
@@ -1317,7 +1355,7 @@ def warehousetrackingupdate(serial):
 		cursor.close()
 		conn.close()
 
-
+# Metodo OK Final crear categorias
 @app.route('/warehousecategory/add', methods=['POST'])
 def warehousecategoryadd():
 	try:
@@ -1344,8 +1382,8 @@ def warehousecategoryadd():
 		conn.close()
 
 #Warehouse category Stock Update
-@app.route('/warehousecategory/stockppdate/<int:id>', methods=['POST'])
-def warehousecategoryadd(id):
+@app.route('/warehousecategory/stockupdate/<int:id>', methods=['POST'])
+def warehousecategorystock(id):
 	try:
 		_json = request.json
 		_minimumStock = _json['minimumStock']
@@ -1356,12 +1394,12 @@ def warehousecategoryadd(id):
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
 			conn.commit()
-			resp = jsonify('New category added succesfully')
+			resp = jsonify('Category Stock updated succesfully')
 			resp.status_code = 200
 			return resp
 		else:
 			return not_found()
-			err_msg = 'Category could not be added.'
+			err_msg = 'Category could not be updated.'
 			return err_msg
 	except Exception as e:
 		print(e)
@@ -1599,7 +1637,7 @@ def techn():
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute("SELECT id, username, IsAvailable FROM n_nemesis_users_user_model WHERE RoleT = 1 AND IsAvailable = 1")
+		cursor.execute("SELECT id, username, email, IsAvailable FROM n_nemesis_users_user_model WHERE RoleT = 1 AND IsAvailable = 1")
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
@@ -1673,21 +1711,46 @@ def update_user():
 		cursor.close()
 		conn.close()
 
-@app.route('/user/delete/<int:id>')
+
+@app.route('/user/delete/<int:id>', methods=['POST'])
 def delete_user(id):
 	try:
-		conn = mysql.connect()
-		cursor = conn.cursor()
-		cursor.execute("DELETE FROM tbl_user WHERE user_id=%s", (id,))
-		conn.commit()
-		resp = jsonify('User deleted successfully!')
-		resp.status_code = 200
-		return resp
+		_json = request.json
+		_isDelete = _json['isDelete']
+		# validate the received values
+		if request.method == 'POST':
+			# save edits
+			sql = 'UPDATE n_nemesis_n_users_user_model SET isDelete=%s WHERE id=%s'
+			data = (_isDelete, id)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = jsonify('User Deleted successfully!')
+			resp.status_code = 200
+			return resp
+		else:
+			return not_found()
 	except Exception as e:
 		print(e)
 	finally:
 		cursor.close()
 		conn.close()
+# @app.route('/user/delete/<int:id>')
+# def delete_user(id):
+# 	try:
+# 		conn = mysql.connect()
+# 		cursor = conn.cursor()
+# 		cursor.execute("DELETE FROM tbl_user WHERE user_id=%s", (id,))
+# 		conn.commit()
+# 		resp = jsonify('User deleted successfully!')
+# 		resp.status_code = 200
+# 		return resp
+# 	except Exception as e:
+# 		print(e)
+# 	finally:
+# 		cursor.close()
+# 		conn.close()
 
 @app.errorhandler(404)
 def not_found(error=None):
