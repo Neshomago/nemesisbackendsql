@@ -9,6 +9,7 @@ import logging, os
 # end of upload import
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from werkzeug.utils import secure_filename
 
 """
 SECCION DE AGENCIAS, GET, POST Y UPDATE
@@ -932,6 +933,44 @@ def update_ticketresolved(id):
 		conn.close()
 
 
+# RESOLVED routes Images
+@app.route('/ticketresolvedimg/<int:id>', methods=['POST'])
+def update_ticketresolvedimageroutes(id):
+	try:
+		_json = request.json
+		_file1 = _json['file1']
+		_file2 = _json['file2']
+		_file3 = _json['file3']
+		_file4 = _json['file4']
+		_file5 = _json['file5']
+		_file6 = _json['file6']
+		_file7 = _json['file7']
+		_file8 = _json['file8']
+		_file9 = _json['file9']
+		_file10 = _json['file10']
+		_file11 = _json['file11']
+		_file12 = _json['file12']
+		# validate the received values
+		if request.method == 'POST':
+			# save edits
+			sql = "UPDATE n_nemesis_n_ticket_model SET file1=%s, file2=%s, file3=%s, file4=%s, file5=%s, file6=%s, file7=%s, file8=%s, file9=%s, file10=%s, file11=%s, file12=%s WHERE (id=%s)"
+			data = (_file1, _file2, _file3, _file4, _file5, _file6, _file7, _file8, _file9, _file10, _file11, _file12, id)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = jsonify('Image routes added successfully!')
+			resp.status_code = 200
+			return resp
+		else:
+			return not_found()
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+
 # Item from Warehouse stock of product
 @app.route('/ticketcountopen')
 def ticketcountopen():
@@ -1000,7 +1039,6 @@ def ticketwarehouse():
 		cursor.close()
 		conn.close()
 
-
 # GET INFO TO UPDATE TICKET
 @app.route('/ticket2up/<int:Id>')
 def ticketinfotoup(Id):
@@ -1048,7 +1086,6 @@ def update_ticketdata(id):
 		cursor.close()
 		conn.close()
 
-
 # Elemento de ticket eliminar
 @app.route('/ticket-equip/del/<int:id>', methods=['GET'])
 def delete_ItemEquipmentticket(id):
@@ -1073,7 +1110,7 @@ def serialchecker():
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute('SELECT serial FROM n_nemesis_n_warehouseitem_model')
+		cursor.execute("SELECT serial FROM n_nemesis_n_warehouseitem_model")
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
@@ -1108,6 +1145,44 @@ def abort_ticket(id):
 		cursor.close()
 		conn.close()
 
+#
+###
+#
+# Bloque referente al admin panel
+#
+## Tabla: nemesis_ticket_value
+@app.route('/ticket/value/')
+def ticket_values():
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute("SELECT * FROM nemesis_ticket_value")
+		rows = cursor.fetchall()
+		resp = jsonify(rows)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+@app.route('/ticket/valueupdate/')
+def ticket_valuesupdate():
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute("SELECT * FROM nemesis_ticket_value")
+		rows = cursor.fetchall()
+		resp = jsonify(rows)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
 ##
 ##
 ## BLOQUE REFERENTE A WAREHOUSE Y TODAS SUS SOLICITUDES
@@ -1135,10 +1210,6 @@ def add_warehouseitem():
 		_isUsed = _json['isUsed']
 		_invoice_purchase = _json['invoice_purchase']
 		# _agencyId = _json['agencyId']
-		_userId= -_json['userId']
-		_changes = _json['changes']
-		_type = _json['type']
-		_descriptionTrack = _json['descriptionTrack']
 		# validate the received values
 		if request.method == 'POST':
 			# save edits
@@ -1194,16 +1265,23 @@ def update_warehouseitem(id):
 def add_warehouseitemtracking():
 	try:
 		_json = request.json
-		_serial = _json['serial']
+		_itemId = _json['itemId']
 		_userId= -_json['userId']
 		_changes = _json['changes']
 		_type = _json['type']
 		_descriptionTrack = _json['descriptionTrack']
+		# _rawData = _json['rawData']
+		# _ids = _json['ids']
+		# _version = _json['version']
+		# _userTraza = _json['userTraza']
+		# _isDelete = _json['isDelete']
 		# validate the received values
 		if request.method == 'POST':
 			# save edits
+			# sql = 'INSERT INTO n_nemesis_n_warehousetracking_model (itemId, userId, changes, type, descriptionTrack, rawData, ids, version, userTraza, isDelete) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+			# data = (_itemId, _userId, _changes, _type, _descriptionTrack, _rawData, _ids, _version, _userTraza, _isDelete)
 			sql = 'INSERT INTO n_nemesis_n_warehousetracking_model (itemId, userId, changes, type, descriptionTrack) VALUES (%s, %s, %s, %s, %s)'
-			data = (_serial, _userId, _changes, _type, _descriptionTrack)
+			data = (_itemId, _userId, _changes, _type, _descriptionTrack)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
@@ -1319,41 +1397,6 @@ def warehousetrackingget(id):
 		cursor.close()
 		conn.close()
 
-
-@app.route('/warehouseitemtrack', methods=['POST'])
-def warehousetrackingupdate(serial):
-	try:
-		_json = request.json
-		# _name = _json['name']
-		# _description = _json['description']
-		_serial = _json['serial']
-		# _statusDetails = _json['statusDetails']
-		# _technicianNotes = _json['technicianNotes']
-		# _isMoving = _json['isMoving']
-		# _agencyId = _json['agencyId']
-		_userId= -_json['userId']
-		_changes = _json['changes']
-		_type = _json['type']
-		_descriptionTrack = _json['descriptionTrack']
-		# validate the received values
-		if request.method == 'POST':
-			# save edits
-			sql = 'INSERT INTO n_nemesis_n_warehousetracking_model (itemId, userId, changes, type, descriptionTrack) VALUES(%s, %s, %s, %s, %s)'
-			data = (_serial, _userId, _changes, _type, _descriptionTrack)
-			conn = mysql.connect()
-			cursor = conn.cursor()
-			cursor.execute(sql, data)
-			conn.commit()
-			resp = jsonify('Track Data updated successfully!')
-			resp.status_code = 200
-			return resp
-		else:
-			return not_found()
-	except Exception as e:
-		print(e)
-	finally:
-		cursor.close()
-		conn.close()
 
 # Metodo OK Final crear categorias
 @app.route('/warehousecategory/add', methods=['POST'])
@@ -1543,38 +1586,6 @@ def delete_witem(name):
 
 
 #
-# Image Upload api code
-#
-
-PROJECT_HOME = os.path.dirname(os.path.realpath(__file__))
-UPLOAD_FOLDER = '{}/uploads/'.format(PROJECT_HOME)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-# ALLOWED_EXT ={"jpg","jpeg","png", "pdf"}
-# def check_file(file):
-# 	return '.' in file and file.rsplit('.',1)[1].lower() in ALLOWED_EXT
-def create_new_folder(local_dir):
-    newpath = local_dir
-    if not os.path.exists(newpath):
-        os.makedirs(newpath)
-    return newpath
-
-@app.route('/uploadimage', methods = ['POST'])
-def api_root():
-    app.logger.info(PROJECT_HOME)
-    if request.method == 'POST' and request.files['image']:
-    	app.logger.info(app.config['UPLOAD_FOLDER'])
-    	img = request.files['image']
-    	img_name = (img.filename)
-    	create_new_folder(app.config['UPLOAD_FOLDER'])
-    	saved_path = os.path.join(app.config['UPLOAD_FOLDER'], img_name)
-    	app.logger.info("saving {}".format(saved_path))
-    	img.save(saved_path)
-    	return send_from_directory(app.config['UPLOAD_FOLDER'],img_name, as_attachment=True)
-    else:
-    	return "Where is the image?"
-
-
-#
 #  Bloque de informacion de Usuarios
 #
 
@@ -1637,7 +1648,7 @@ def techn():
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute("SELECT id, username, email, IsAvailable FROM n_nemesis_users_user_model WHERE RoleT = 1 AND IsAvailable = 1")
+		cursor.execute("SELECT id, username, email, IsAvailable FROM n_nemesis_users_user_model WHERE RoleT = 1")
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
@@ -1751,6 +1762,33 @@ def delete_user(id):
 # 	finally:
 # 		cursor.close()
 # 		conn.close()
+
+@app.route('/uploader', methods=['POST'])
+def uploader():
+	if request.method == 'POST':
+		files = request.files.getlist('files')
+		for file in files:
+			try:
+				filename = secure_filename(file.filename)
+				file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+			except FileNotFoundError:
+				return 'Error, folder does not exist'
+	return '<h1>Files uploaded sucessfuly</h1>'
+
+@app.route('/uploads/<filename>')
+def upload(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+
+@app.route('/downfoto', methods=['POST'])	
+def downfoto():
+	_json = request.json
+	_file = _json['file']
+	try:
+		os.remove(os.path.join(app.config['UPLOAD_FOLDER'], _file))
+	except FileNotFoundError:
+		return '0'
+	return '1'
 
 @app.errorhandler(404)
 def not_found(error=None):
