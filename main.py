@@ -3,17 +3,18 @@ import pymysql
 from app import app
 from db_config import mysql
 from flask import jsonify
-from flask import Flask, request, send_from_directory
+from flask import Flask, url_for, send_from_directory, request
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
-# from sqlalchemy import create_engine
-# import pandas as pd
+from sqlalchemy import create_engine
+import pandas as pd
 
-db='nemesis'
-table='n_nemesis_n_tickets_model'
-path='./excel/cargatickets.xlsx'
-url='mysql+mysqlconnector://root:atorres1986@localhost:3306/'
+
+# db='nemesis'
+# table='n_nemesis_n_ticket_model'
+# path='./excel/cargatickets.xlsx'
+# url='mysql+mysqlconnector://root:Lumia2020*@localhost/'
 # engine=create_engine(url + db, echo = False)
 
 # @app.route('/excel', methods=['POST'])
@@ -25,10 +26,10 @@ url='mysql+mysqlconnector://root:atorres1986@localhost:3306/'
 # 				filename = secure_filename(file.filename)
 # 				file.save(os.path.join(app.config['UPLOAD_EXCEL'], filename))
 # 			except FileNotFoundError:
-# 				return 'Error, folder does not exist'
-# 		df = pd.read_excel(path)
-# 		df.to_sql(name = table, con = engine, if_exists = 'append', index = False)
-# 	return 'Files uploaded sucessfuly'
+# 				return 'Error, folder does not exist.'
+# 		df = pd.read_excel(path, engine='openpyxl')
+# 		df.to_sql(name = table, con = engine, if_exists='append', index=False )
+# 	return 'File upload suscessfuly'
 
 """
 SECCION DE AGENCIAS, GET, POST Y UPDATE
@@ -1122,23 +1123,41 @@ def delete_ItemEquipmentticket(id):
 		cursor.close()
 		conn.close()
 
-#Consulta de Seriales y nombre item
-# @app.route('/equipmentSerialCheck/<string:serial>', methods=['POST'])
-@app.route('/equipmentSerialCheck/', methods=['GET'])
-def serialchecker():
-	try:
-		conn = mysql.connect()
-		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute("SELECT serial FROM n_nemesis_n_warehouseitem_model")
-		rows = cursor.fetchall()
-		resp = jsonify(rows)
-		resp.status_code = 200
-		return resp
-	except Exception as e:
-		print(e)
-	finally:
-		cursor.close()
-		conn.close()
+# Consulta de Seriales y nombre item
+@app.route('/equipmentSerialCheck/<string:serial>', methods=['POST'])
+def serialchecker(serial):
+    try:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute('SELECT serial as nserial FROM n_nemesis_n_warehouseitem_model WHERE n_nemesis_n_warehouseitem_model.serial = %s', serial)
+        rows = cursor.fetchall()
+        resp = jsonify(rows)
+        return resp
+        #if resp == jsonify(serial):
+        #    return "OK"
+        #else:
+        #    return "NO"
+    except Exception as e:
+        print(e)
+    finally:
+        cursor.close()
+        conn.close()
+
+# @app.route('/equipmentSerialCheck/', methods=['GET'])
+# def serialchecker():
+# 	try:
+# 		conn = mysql.connect()
+# 		cursor = conn.cursor(pymysql.cursors.DictCursor)
+# 		cursor.execute("SELECT serial FROM n_nemesis_n_warehouseitem_model")
+# 		rows = cursor.fetchall()
+# 		resp = jsonify(rows)
+# 		resp.status_code = 200
+# 		return resp
+# 	except Exception as e:
+# 		print(e)
+# 	finally:
+# 		cursor.close()
+# 		conn.close()
 
 # Abort Ticket
 @app.route('/ticket/abort/<int:id>', methods=['POST'])
@@ -1186,16 +1205,23 @@ def ticket_values():
 		cursor.close()
 		conn.close()
 
-@app.route('/ticket/valueupdate/')
-def ticket_valuesupdate():
+@app.route('/ticket/valueupdate/<int:id>')
+def ticket_valuesupdate(id):
 	try:
-		conn = mysql.connect()
-		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute("SELECT * FROM nemesis_ticket_value")
-		rows = cursor.fetchall()
-		resp = jsonify(rows)
-		resp.status_code = 200
-		return resp
+		_json = request.json
+		_ticket_value = _json['ticket_value']
+		if request.method == 'POST':
+			sql = "UPDATE nemesis_ticket_value SET ticket_value=%s WHERE id=%s"
+			data = (_ticket_value, id)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = jsonify('Value Changed Correctly.')
+			resp.status_code = 200
+			return resp
+		else:
+			return not_found()
 	except Exception as e:
 		print(e)
 	finally:
@@ -1266,7 +1292,7 @@ def update_warehouseitem(id):
 		_statusDescription = _json['statusDescription']
 		if request.method == 'POST':
 			sql = "UPDATE n_nemesis_n_warehouseitem_model SET serial=%s, activation=%s, warehouseId = %s, used=%s, location=%s, status=%s, warranty_period=%s, warranty_invoiceDate=%s, statusDescription=%s WHERE id=%s"
-			data = (_serial, _activation,_warehouseId,_used,_location,_status, _warranty_period, _warranty_invoiceDate,_statusDescription, id)
+			data = (_serial, _activation,_warehouseId,_used,_location,_status,_warranty_period, _warranty_invoiceDate, _statusDescription, id)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
@@ -1294,7 +1320,7 @@ def add_warehouseitemtracking():
 		_descriptionTrack = _json['descriptionTrack']
 		# validate the received values
 		if request.method == 'POST':
-			sql = "INSERT INTO n_nemesis_n_warehousetracking_model (itemId, userId, changes, type, descriptionTrack) VALUES(%s, %s, %s, %s, %s)"
+			sql = "INSERT INTO n_nemesis_n_warehousetracking_model (itemId, userId, changes, type, descriptionTrack) VALUES (%s, %s, %s, %s, %s)"
 			data = (_itemId, _userId, _changes, _type, _descriptionTrack)
 			conn = mysql.connect()
 			cursor = conn.cursor()
@@ -1398,7 +1424,7 @@ def warehousecategorycount():
 		conn.close()
 
 # ITEM TRACKING
-@app.route('/warehouse/tracking/<int:id>', methods=['GET'])
+@app.route('/warehouse/tracking/<string:id>', methods=['GET'])
 def warehousetrackingget(id):
 	try:
 		conn = mysql.connect()
@@ -1432,7 +1458,7 @@ def warehousecategoryadd():
 			resp.status_code = 200
 			return resp
 		else:
-			return not_found()
+			#return not_found()
 			err_msg = 'Category could not be added.'
 			return err_msg
 	except Exception as e:
