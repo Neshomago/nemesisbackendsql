@@ -1,15 +1,34 @@
+import os
 import pymysql
 from app import app
 from db_config import mysql
 from flask import jsonify
-from flask import flash, request
-#Begin Import from https://github.com/teamsoo/flask-api-upload-image/blob/master/server.py
-from flask import Flask, url_for, send_from_directory, request
-import logging, os
-# end of upload import
+from flask import Flask, request, send_from_directory
+from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
-from werkzeug.utils import secure_filename
+# from sqlalchemy import create_engine
+# import pandas as pd
+
+db='nemesis'
+table='n_nemesis_n_tickets_model'
+path='./excel/cargatickets.xlsx'
+url='mysql+mysqlconnector://root:atorres1986@localhost:3306/'
+# engine=create_engine(url + db, echo = False)
+
+# @app.route('/excel', methods=['POST'])
+# def agrega_tickets():
+# 	if request.method == 'POST':
+# 		files = request.files.getlist('files')
+# 		for file in files:
+# 			try:
+# 				filename = secure_filename(file.filename)
+# 				file.save(os.path.join(app.config['UPLOAD_EXCEL'], filename))
+# 			except FileNotFoundError:
+# 				return 'Error, folder does not exist'
+# 		df = pd.read_excel(path)
+# 		df.to_sql(name = table, con = engine, if_exists = 'append', index = False)
+# 	return 'Files uploaded sucessfuly'
 
 """
 SECCION DE AGENCIAS, GET, POST Y UPDATE
@@ -1202,19 +1221,20 @@ def add_warehouseitem():
 		_category = _json['categoryId']
 		_status = _json['status']
 		_warrantyPeriod = _json['warrantyPeriod']
+		_warranty_invoiceDate = _json['warranty_invoiceDate']
 		# _statusDetails = _json['statusDetails']
 		# _technicianNotes = _json['technicianNotes']
 		# _isMoving = _json['isMoving']
 		_isDelete = _json['isDelete']
 		_warehouseId = _json['warehouseId']
-		_isUsed = _json['isUsed']
+		_used = _json['used']
 		_invoice_purchase = _json['invoice_purchase']
 		# _agencyId = _json['agencyId']
 		# validate the received values
 		if request.method == 'POST':
 			# save edits
-			sql = 'INSERT INTO n_nemesis_n_warehouseitem_model (name, description, serial, categoryId, status, warehouseId, used, supplierId, warranty_period, warranty_invoiceId, isDelete) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
-			data = (_name, _description, _serial, _category, _status, _warehouseId, _isUsed, _supplier, _warrantyPeriod, _invoice_purchase, _isDelete)
+			sql = 'INSERT INTO n_nemesis_n_warehouseitem_model (name, description, serial, categoryId, status, warehouseId, used, supplierId, warranty_period, warranty_invoiceDate, warranty_invoiceId, isDelete) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+			data = (_name, _description, _serial, _category, _status, _warehouseId, _used, _supplier, _warrantyPeriod, _warranty_invoiceDate, _invoice_purchase, _isDelete)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
@@ -1241,10 +1261,12 @@ def update_warehouseitem(id):
 		_used = _json['used']
 		_location = _json['location']
 		_status = _json['status']
+		_warranty_period = _json['warranty_period']
+		_warranty_invoiceDate = _json['warranty_invoiceDate']
 		_statusDescription = _json['statusDescription']
 		if request.method == 'POST':
-			sql = "UPDATE n_nemesis_n_warehouseitem_model SET serial=%s, activation=%s, warehouseId = %s, used=%s, location=%s, status=%s, statusDescription=%s WHERE id=%s"
-			data = (_serial, _activation,_warehouseId,_used,_location,_status,_statusDescription, id)
+			sql = "UPDATE n_nemesis_n_warehouseitem_model SET serial=%s, activation=%s, warehouseId = %s, used=%s, location=%s, status=%s, warranty_period=%s, warranty_invoiceDate=%s, statusDescription=%s WHERE id=%s"
+			data = (_serial, _activation,_warehouseId,_used,_location,_status, _warranty_period, _warranty_invoiceDate,_statusDescription, id)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
@@ -1266,26 +1288,21 @@ def add_warehouseitemtracking():
 	try:
 		_json = request.json
 		_itemId = _json['itemId']
-		_userId= -_json['userId']
+		_userId= _json['userId']
 		_changes = _json['changes']
 		_type = _json['type']
 		_descriptionTrack = _json['descriptionTrack']
-		# _rawData = _json['rawData']
-		# _ids = _json['ids']
-		# _version = _json['version']
-		# _userTraza = _json['userTraza']
-		# _isDelete = _json['isDelete']
 		# validate the received values
 		if request.method == 'POST':
-			# save edits
-			# sql = 'INSERT INTO n_nemesis_n_warehousetracking_model (itemId, userId, changes, type, descriptionTrack, rawData, ids, version, userTraza, isDelete) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
-			# data = (_itemId, _userId, _changes, _type, _descriptionTrack, _rawData, _ids, _version, _userTraza, _isDelete)
-			sql = 'INSERT INTO n_nemesis_n_warehousetracking_model (itemId, userId, changes, type, descriptionTrack) VALUES (%s, %s, %s, %s, %s)'
+			sql = "INSERT INTO n_nemesis_n_warehousetracking_model (itemId, userId, changes, type, descriptionTrack) VALUES(%s, %s, %s, %s, %s)"
 			data = (_itemId, _userId, _changes, _type, _descriptionTrack)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
 			conn.commit()
+			# save edits
+			# sql = 'INSERT INTO n_nemesis_n_warehousetracking_model (itemId, userId, changes, type, descriptionTrack, rawData, ids, version, userTraza, isDelete) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+			# data = (_itemId, _userId, _changes, _type, _descriptionTrack, _rawData, _ids, _version, _userTraza, _isDelete)
 			resp = jsonify('Item track info added successfully!')
 			resp.status_code = 200
 			return resp
