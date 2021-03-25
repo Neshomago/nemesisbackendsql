@@ -11,25 +11,25 @@ from sqlalchemy import create_engine
 import pandas as pd
 
 
-# db='nemesis'
-# table='n_nemesis_n_ticket_model'
-# path='./excel/cargatickets.xlsx'
-# url='mysql+mysqlconnector://root:Lumia2020*@localhost/'
-# engine=create_engine(url + db, echo = False)
+db='nemesis'
+table='n_nemesis_n_ticket_model'
+path='./excel/cargatickets.xlsx'
+url='mysql+mysqlconnector://root:Lumia2020*@localhost/'
+engine=create_engine(url + db, echo = False)
 
-# @app.route('/excel', methods=['POST'])
-# def agrega_tickets():
-# 	if request.method == 'POST':
-# 		files = request.files.getlist('files')
-# 		for file in files:
-# 			try:
-# 				filename = secure_filename(file.filename)
-# 				file.save(os.path.join(app.config['UPLOAD_EXCEL'], filename))
-# 			except FileNotFoundError:
-# 				return 'Error, folder does not exist.'
-# 		df = pd.read_excel(path, engine='openpyxl')
-# 		df.to_sql(name = table, con = engine, if_exists='append', index=False )
-# 	return 'File upload suscessfuly'
+@app.route('/excel', methods=['POST'])
+def agrega_tickets():
+	if request.method == 'POST':
+		files = request.files.getlist('files')
+		for file in files:
+			try:
+				filename = secure_filename(file.filename)
+				file.save(os.path.join(app.config['UPLOAD_EXCEL'], filename))
+			except FileNotFoundError:
+				return 'Error, folder does not exist.'
+		df = pd.read_excel(path, engine='openpyxl')
+		df.to_sql(name = table, con = engine, if_exists='append', index=False )
+	return 'File upload suscessfuly'
 
 """
 SECCION DE AGENCIAS, GET, POST Y UPDATE
@@ -106,7 +106,7 @@ def agencyCustomer(customerId):
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute('SELECT id, name, address, managerId, certification, email, phone, vat FROM n_nemesis_n_agency_model WHERE customerId =%s', customerId)
+		cursor.execute('SELECT id, name, address, managerId, certification, email, phone, vat FROM n_nemesis_n_agency_model WHERE customerId=%s', customerId)
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
@@ -117,7 +117,7 @@ def agencyCustomer(customerId):
 		cursor.close()
 		conn.close()
 
-@app.route('/agency/<int:agencyId>')
+@app.route('/agencyid/<int:agencyId>')
 def agencyId(agencyId):
 	try:
 		conn = mysql.connect()
@@ -1673,7 +1673,7 @@ def usermail():
 		_mail = _json['usermail']
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute("SELECT a.id, a.email, a.RoleA, a.RoleC, a.RoleE, a.RoleT, b.name, b.surname, b.address, b.phone \
+		cursor.execute("SELECT a.id, a.email, a.RoleA, a.RoleC, a.RoleE, a.RoleT, b.name, b.surname, b.address, b.phone, b.customerId \
 			 FROM n_nemesis_users_user_model a, n_nemesis_n_contact_model b WHERE a.email=%s and a.email = b.email", _mail)
 		row = cursor.fetchone()
 		resp = jsonify(row)
