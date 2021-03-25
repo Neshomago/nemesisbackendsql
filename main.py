@@ -9,6 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from sqlalchemy import create_engine
 import pandas as pd
+from PIL import Image
 
 
 db='nemesis'
@@ -1814,6 +1815,12 @@ def uploader():
 			try:
 				filename = secure_filename(file.filename)
 				file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+				imagen = Image.open(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+				if imagen.width > 1980 and imagen.height > 1080:
+					reducir_imagen = imagen.resize((1980, 1080))
+					reducir_imagen.save(os.path.join(app.config['UPLOAD_FOLDER'], filename), optimize=True)
+				else:
+					imagen.save(os.path.join(app.config['UPLOAD_FOLDER'], filename), optimize=True)	
 			except FileNotFoundError:
 				return 'Error, folder does not exist'
 	return '<h1>Files uploaded sucessfuly</h1>'
