@@ -91,7 +91,7 @@ def agencys_per_client():
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute('SELECT * FROM n_nemesis_n_agency_model WHERE certification NOT LIKE %%disinstallato%% ORDER BY id DESC')
+		cursor.execute("SELECT * FROM n_nemesis_n_agency_model WHERE certification NOT LIKE 'disinstallato%' ORDER BY id DESC")
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
@@ -641,6 +641,7 @@ def add_technician(id):
 		_json = request.json
 		_tech = _json['tech_assign']
 		_assignedDate = _json['assignedDate']
+		_fechaPrueba = _json['fechaPrueba']
 		_version = _json['version']
 		if request.method == 'POST':
 			sql = "UPDATE n_nemesis_n_ticket_model SET tech_assign = %s, assignedDate=%s, version = %s WHERE id=%s"
@@ -1280,15 +1281,12 @@ def add_warehouseitem():
 		conn.close()
 
 #Select item from agency
-@app.route('/warehouseitagency/<int:customerId>', methods=['GET'])
-def warehouseitemagency(customerId):
+@app.route('/warehouseitagency/<int:locationId>')
+def warehouseitagency(locationId):
 	try:
-		_json = request.json
-		_locationId= _json['locationId']
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		# cursor.execute('SELECT * FROM nemesis.n_nemesis_n_agency_model a, n_nemesis_n_warehouse_model b, n_nemesis_n_warehouseitem_model c, n_nemesis_n_customer_model d where  b.ownerId = d.id and c.warehouseid = b.id and a.customerId=%s and c.createdBy=%s')
-		cursor.execute("SELECT * FROM n_nemesis_n_agency_model a, n_nemesis_n_warehouseitem_model b WHERE b.locationId=%s AND a.customerId=%s and a.id=b.locationId", _locationId, customerId)
+		cursor.execute('SELECT * FROM n_nemesis_n_warehouseitem_model WHERE locationId=%s',locationId)
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
@@ -1298,6 +1296,24 @@ def warehouseitemagency(customerId):
 	finally:
 		cursor.close()
 		conn.close()
+# @app.route('/warehouseitagency/<int:customerId>', methods=['GET'])
+# def warehouseitemagency(customerId):
+# 	try:
+# 		_json = request.json
+# 		_locationId= _json['locationId']
+# 		conn = mysql.connect()
+# 		cursor = conn.cursor(pymysql.cursors.DictCursor)
+# 		# cursor.execute('SELECT * FROM nemesis.n_nemesis_n_agency_model a, n_nemesis_n_warehouse_model b, n_nemesis_n_warehouseitem_model c, n_nemesis_n_customer_model d where  b.ownerId = d.id and c.warehouseid = b.id and a.customerId=%s and c.createdBy=%s')
+# 		cursor.execute("SELECT * FROM n_nemesis_n_agency_model a, n_nemesis_n_warehouseitem_model b WHERE b.locationId=%s AND a.customerId=%s and a.id=b.locationId", _locationId, customerId)
+# 		rows = cursor.fetchall()
+# 		resp = jsonify(rows)
+# 		resp.status_code = 200
+# 		return resp
+# 	except Exception as e:
+# 		print(e)
+# 	finally:
+# 		cursor.close()
+# 		conn.close()
 	# try:
 	# 	_json = request.json
 	# 	_serial = _json['serial']
