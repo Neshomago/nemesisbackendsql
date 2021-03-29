@@ -564,6 +564,35 @@ def add_equipent():
 		cursor.close()
 		conn.close()
 
+# Añadir equipment METODO OK FINAL
+@app.route('/ticket-equip/techview', methods=['POST'])
+def add_equipenttechview():
+	try:
+		_json = request.json
+		_item = _json['item']
+		_ticketId = _json['ticketId']
+		_quantity = _json['quantity']
+		_warehouseId = _json['warehouseId']
+		_status = _json['status']
+		_technicianAssigned = _json['technicianAssigned']
+		if request.method == 'POST':
+			sql = 'INSERT INTO n_nemesis_n_equipment_model (item, quantity, ticketId, warehouseId, status, technicianAssigned) VALUES (%s, %s, %s, %s, %s, %s)'
+			data = (_item, _quantity, _ticketId, _warehouseId, _status, _technicianAssigned)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = jsonify('Item from ticket changed correctly')
+			resp.status_code = 200
+			return resp
+		else:
+			return not_found()
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
 # Update Equipment Data
 @app.route('/ticket-equip/update/<int:id>', methods=['POST'])
 def update_item(id):
@@ -688,6 +717,31 @@ def update_technician(id):
 		cursor.close()
 		conn.close()
 
+
+@app.route('/user/updateavailable/<int:id>', methods=['POST'])
+def UserAvailable(id):
+	try:
+		_json = request.json
+		_IsAvailable = _json['IsAvailable']
+		# validate the received values
+		if request.method == 'POST':
+			# save edits
+			sql = 'UPDATE n_nemesis_n_users_user_model SET IsAvailable=%s WHERE id=%s'
+			data = (_IsAvailable, id)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = jsonify('User Availability changed!')
+			resp.status_code = 200
+			return resp
+		else:
+			return not_found()
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
 # 
 #  Bloque de informacion de tags
 #
@@ -1126,7 +1180,7 @@ def delete_ItemEquipmentticket(id):
 		conn.close()
 
 # Consulta de Seriales y nombre item
-@app.route('/equipmentSerialCheck/<string:serial>', methods=['POST'])
+@app.route('/equipmentSerialCheck/<string:serial>', methods=['GET'])
 def serialchecker(serial):
     try:
         conn = mysql.connect()
@@ -1555,7 +1609,7 @@ def usersmailanddata():
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute('SELECT * FROM n_nemesis_n_contact_model a, n_nemesis_users_user_model b where a.email = b.email')
+		cursor.execute('SELECT * FROM n_nemesis_n_contact_model a, n_nemesis_users_user_model b where a.email = b.email AND RoleT=1 group by a.id')
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
