@@ -723,10 +723,11 @@ def UserAvailable(id):
 	try:
 		_json = request.json
 		_IsAvailable = _json['IsAvailable']
+		print(_IsAvailable)
 		# validate the received values
 		if request.method == 'POST':
 			# save edits
-			sql = 'UPDATE n_nemesis_n_users_user_model SET IsAvailable=%s WHERE id=%s'
+			sql = 'UPDATE n_nemesis_users_user_model SET IsAvailable=%s WHERE id=%s'
 			data = (_IsAvailable, id)
 			conn = mysql.connect()
 			cursor = conn.cursor()
@@ -1182,38 +1183,21 @@ def delete_ItemEquipmentticket(id):
 # Consulta de Seriales y nombre item
 @app.route('/equipmentSerialCheck/<string:serial>', methods=['GET'])
 def serialchecker(serial):
-    try:
-        conn = mysql.connect()
-        cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute('SELECT serial as nserial FROM n_nemesis_n_warehouseitem_model WHERE n_nemesis_n_warehouseitem_model.serial = %s', serial)
-        rows = cursor.fetchall()
-        resp = jsonify(rows)
-        return resp
-        #if resp == jsonify(serial):
-        #    return "OK"
-        #else:
-        #    return "NO"
-    except Exception as e:
-        print(e)
-    finally:
-        cursor.close()
-        conn.close()
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute('SELECT count(*) seriales FROM n_nemesis_n_warehouseitem_model WHERE n_nemesis_n_warehouseitem_model.serial=%s', serial)
+		# cursor.execute('SELECT serial as nserial FROM n_nemesis_n_warehouseitem_model WHERE n_nemesis_n_warehouseitem_model.serial=%s', serial)
+		rows = cursor.fetchall()
+		# conteo = cursor.rowcount
+		resp = jsonify(rows)
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
 
-# @app.route('/equipmentSerialCheck/', methods=['GET'])
-# def serialchecker():
-# 	try:
-# 		conn = mysql.connect()
-# 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-# 		cursor.execute("SELECT serial FROM n_nemesis_n_warehouseitem_model")
-# 		rows = cursor.fetchall()
-# 		resp = jsonify(rows)
-# 		resp.status_code = 200
-# 		return resp
-# 	except Exception as e:
-# 		print(e)
-# 	finally:
-# 		cursor.close()
-# 		conn.close()
 
 # Abort Ticket
 @app.route('/ticket/abort/<int:id>', methods=['POST'])
@@ -1609,7 +1593,7 @@ def usersmailanddata():
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute('SELECT * FROM n_nemesis_n_contact_model a, n_nemesis_users_user_model b where a.email = b.email AND RoleT=1 group by a.id')
+		cursor.execute('SELECT a.*, b.id as bid, b.IsAvailable FROM n_nemesis_n_contact_model a, n_nemesis_users_user_model b where a.email = b.email AND b.RoleT=1 group by a.id')
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
