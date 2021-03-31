@@ -898,7 +898,7 @@ def tickets():
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute('SELECT * FROM n_nemesis_n_ticket_model, n_nemesis_n_agency_model WHERE n_nemesis_n_ticket_model.agencyId = n_nemesis_n_agency_model.id ORDER BY n_nemesis_n_ticket_model.id DESC')
+		cursor.execute('SELECT * FROM n_nemesis_n_ticket_model as t, n_nemesis_n_agency_model as a WHERE t.agencyId = a.id ORDER BY t.id DESC')
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
@@ -915,7 +915,7 @@ def ticket(id):
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute("SELECT * FROM n_nemesis_n_ticket_model, n_nemesis_n_agency_model WHERE n_nemesis_n_ticket_model.agencyId = n_nemesis_n_agency_model.id AND n_nemesis_n_ticket_model.id=%s", id)
+		cursor.execute("SELECT *, a.id as aid, a.customerId as acid FROM n_nemesis_n_ticket_model, n_nemesis_n_agency_model AS a WHERE n_nemesis_n_ticket_model.agencyId = a.id AND n_nemesis_n_ticket_model.id=%s", id)
 		row = cursor.fetchall()
 		resp = jsonify(row)
 		resp.status_code = 200
@@ -1334,53 +1334,64 @@ def warehouseitagency(locationId):
 	finally:
 		cursor.close()
 		conn.close()
-# @app.route('/warehouseitagency/<int:customerId>', methods=['GET'])
-# def warehouseitemagency(customerId):
-# 	try:
-# 		_json = request.json
-# 		_locationId= _json['locationId']
-# 		conn = mysql.connect()
-# 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-# 		# cursor.execute('SELECT * FROM nemesis.n_nemesis_n_agency_model a, n_nemesis_n_warehouse_model b, n_nemesis_n_warehouseitem_model c, n_nemesis_n_customer_model d where  b.ownerId = d.id and c.warehouseid = b.id and a.customerId=%s and c.createdBy=%s')
-# 		cursor.execute("SELECT * FROM n_nemesis_n_agency_model a, n_nemesis_n_warehouseitem_model b WHERE b.locationId=%s AND a.customerId=%s and a.id=b.locationId", _locationId, customerId)
-# 		rows = cursor.fetchall()
-# 		resp = jsonify(rows)
-# 		resp.status_code = 200
-# 		return resp
-# 	except Exception as e:
-# 		print(e)
-# 	finally:
-# 		cursor.close()
-# 		conn.close()
-	# try:
-	# 	_json = request.json
-	# 	_serial = _json['serial']
-	# 	_activation = _json['activation']
-	# 	_warehouseId = _json['warehouseId']
-	# 	_used = _json['used']
-	# 	_location = _json['location']
-	# 	_locationId = _json['locationId']
-	# 	_status = _json['status']
-	# 	_warranty_period = _json['warranty_period']
-	# 	_warranty_invoiceDate = _json['warranty_invoiceDate']
-	# 	_statusDescription = _json['statusDescription']
-	# 	if request.method == 'POST':
-	# 		sql="SELECT * FROM nemesis.n_nemesis_n_agency_model a, n_nemesis_n_warehouse_model b, n_nemesis_n_warehouseitem_model c, n_nemesis_n_customer_model d where  b.ownerId = d.id and c.warehouseid = b.id and a.customerId=%s and c.createdBy=%s"
-	# 		data = ()
-	# 		conn = mysql.connect()
-	# 		cursor = conn.cursor()
-	# 		cursor.execute(sql, data)
-	# 		conn.commit()
-	# 		resp = jsonify('Items from agency Correctly.')
-	# 		resp.status_code = 200
-	# 		return resp
-	# 	else:
-	# 		return not_found()
-	# except Exception as e:
-	# 	print(e)
-	# finally:
-	# 	cursor.close()
-	# 	conn.close()
+
+@app.route('/warehouseitagencyticket', methods=['POST'])
+def warehouseitemagencyinticketadd():
+	try:
+		_json = request.json
+		_item = _json['item']
+		_item_serial = _json['item_serial']
+		_ticketId = _json['ticketId']
+		_customerId = _json['customerId']
+		_location = _json['location']
+		_locationId= _json['locationId']
+		_tech_assignedId = _json['tech_assignedId']
+		_notes_item = _json['notes_item']
+		_ticketviewversion = _json['ticketviewversion']
+		if request.method == 'POST':
+			sql="INSERT INTO n_nemesis_n_technicalreview_ticket (item ,item_serial ,ticketId ,customerId ,location ,locationId ,tech_assignedId ,notes_item ,ticketviewversion) VALUES (%s ,%s ,%s ,%s ,%s ,%s ,%s , %s, %s);"
+			data = (_item, _item_serial, _ticketId, _customerId, _location, _locationId, _tech_assignedId, _notes_item, _ticketviewversion)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = 'Item movement registered view'
+			resp.status_code = 200
+			return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+	
+@app.route('/warehouseitagencyticket/<string:ticketId>', methods=['GET'])
+def warehouseitemagencyinticketget(ticketId):
+	try:
+		_json = request.json
+		_item = _json['item']
+		_item_serial = _json['item_serial']
+		_ticketId = _json['ticketId']
+		_customerId = _json['customerId']
+		_location = _json['location']
+		_locationId= _json['locationId']
+		_tech_assignedId = _json['tech_assignedId']
+		_notes_item = _json['notes_item']
+		_ticketviewversion = _json['ticketviewversion']
+		if request.method == 'POST':
+			sql="INSERT INTO n_nemesis_n_technicalreview_ticket (item ,item_serial ,ticketId ,customerId ,location ,locationId ,tech_assignedId ,notes_item ,ticketviewversion) VALUES (%s ,%s ,%s ,%s ,%s ,%s ,%s , %s, %s);"
+			data = (_item, _item_serial, _ticketId, _customerId, _location, _locationId, _tech_assignedId, _notes_item, _ticketviewversion)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = 'Item movement registered view'
+			resp.status_code = 200
+			return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
 
 	#METODO QUE TRAE LA DATA PERO EN FORMA DE ARRAY
 	#Select item from agency
