@@ -1583,12 +1583,29 @@ def warehousetrackingget(id):
 		conn.close()
 
 #User tracking in itemhistory
-@app.route('/warehouseusertrackinfo/<int:id>')
+@app.route('/warehouseusertrackinfo/<string:id>')
 def warehouseusertrackingo(id):
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
 		cursor.execute('SELECT a.name, a.surname, a.email, a.customerId FROM n_nemesis_n_contact_model a, n_nemesis_users_user_model b where a.email = b.email and b.id=%s', id)
+		rows = cursor.fetchall()
+		resp = jsonify(rows)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+		#User tracking in itemhistory
+@app.route('/warehouseusertrackinfolist')
+def warehouseusertracknameslist():
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute('SELECT b.id, a.name, a.surname, a.email, a.customerId FROM n_nemesis_n_contact_model a, n_nemesis_users_user_model b where a.email = b.email')
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
@@ -1882,7 +1899,7 @@ def users():
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute("SELECT user_id id, user_name name, user_email email, user_password pwd FROM tbl_user")
+		cursor.execute("SELECT * FROM n_nemesis_users_user_model")
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
 		resp.status_code = 200
