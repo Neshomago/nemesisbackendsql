@@ -9,14 +9,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from sqlalchemy import create_engine
 import pandas as pd
-# from PIL import Image
+from PIL import Image
 
 
 db='nemesis'
 table='n_nemesis_n_ticket_model'
 path='./excel/cargatickets.xlsx'
 url='mysql+mysqlconnector://root:Lumia2020*@localhost/'
-# engine=create_engine(url + db, echo = False)
+engine=create_engine(url + db, echo = False)
 
 @app.route('/excel', methods=['POST'])
 def agrega_tickets():
@@ -28,7 +28,7 @@ def agrega_tickets():
 				file.save(os.path.join(app.config['UPLOAD_EXCEL'], filename))
 			except FileNotFoundError:
 				return 'Error, folder does not exist.'
-		# df = pd.read_excel(path, engine='openpyxl')
+		df = pd.read_excel(path, engine='openpyxl')
 		df.to_sql(name = table, con = engine, if_exists='append', index=False )
 	return 'File upload suscessfuly'
 
@@ -1341,21 +1341,21 @@ def warehouseitemagencyinticketadd():
 		_json = request.json
 		_item = _json['item']
 		_serial = _json['serial']
-		_ticketId = _json['ticketId']
-		_quantity = _json['quantity']
+		_ticketId = int(_json['ticketId'])
+		# _quantity = _json['quantity']
 		_location = _json['location']
-		_locationId= _json['locationId']
-		_technicianAssigned = _json['technicianAssigned']
+		_locationId= int(_json['locationId'])
+		_technicianAssigned = int(_json['technicianAssigned'])
 		_status = _json['status']
-		_ticketviewversion = _json['ticketviewversion']
+		_ticketviewversion = int(_json['ticketviewversion'])
 		if request.method == 'POST':
-			sql="INSERT INTO n_nemesis_n_technicalreview_ticket (item ,item_serial ,ticketId ,location ,locationId ,tech_assignedId ,notes_item ,ticketviewversion) VALUES (%s ,%s ,%s ,%s ,%s ,%s ,%s , %s);"
+			sql="INSERT INTO n_nemesis_n_technicalreview_ticket (item, item_serial, ticketId, location, locationId, tech_assignedId, notes_item, ticketviewversion) VALUES (%s, %s, %s, %s, %s, %s, %s, %s);"
 			data = (_item, _serial, _ticketId, _location, _locationId, _technicianAssigned, _status, _ticketviewversion)
 			conn = mysql.connect()
 			cursor = conn.cursor()
 			cursor.execute(sql, data)
 			conn.commit()
-			resp = 'Item movement registered view'
+			resp = jsonify('Item movement registered view')
 			resp.status_code = 200
 			return resp
 	except Exception as e:
@@ -1559,6 +1559,7 @@ def warehousetrackingget(id):
 	try:
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		# cursor.execute('SELECT * FROM n_nemesis_n_warehousetracking_model WHERE itemId=%s', id)
 		cursor.execute('SELECT * FROM n_nemesis_n_warehousetracking_model WHERE itemId=%s', id)
 		rows = cursor.fetchall()
 		resp = jsonify(rows)
@@ -1979,12 +1980,12 @@ def uploader():
 			try:
 				filename = secure_filename(file.filename)
 				file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-				# imagen = Image.open(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-				# if imagen.width > 1980 and imagen.height > 1080:
-				# 	reducir_imagen = imagen.resize((1980, 1080))
-				# 	reducir_imagen.save(os.path.join(app.config['UPLOAD_FOLDER'], filename), optimize=True)
-				# else:
-				# 	imagen.save(os.path.join(app.config['UPLOAD_FOLDER'], filename), optimize=True)	
+				imagen = Image.open(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+				if imagen.width > 1980 and imagen.height > 1080:
+					reducir_imagen = imagen.resize((1980, 1080))
+					reducir_imagen.save(os.path.join(app.config['UPLOAD_FOLDER'], filename), optimize=True)
+				else:
+					imagen.save(os.path.join(app.config['UPLOAD_FOLDER'], filename), optimize=True)	
 			except FileNotFoundError:
 				return 'Error, folder does not exist'
 	return '<h1>Files uploaded sucessfuly</h1>'
