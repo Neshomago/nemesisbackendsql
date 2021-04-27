@@ -9,14 +9,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from sqlalchemy import create_engine
 import pandas as pd
-from PIL import Image
+# from PIL import Image
 
 
 db='nemesis'
 table='n_nemesis_n_ticket_model'
 path='./excel/cargatickets.xlsx'
 url='mysql+mysqlconnector://root:Lumia2020*@localhost/'
-engine=create_engine(url + db, echo = False)
+# engine=create_engine(url + db, echo = False)
 
 @app.route('/excel', methods=['POST'])
 def agrega_tickets():
@@ -28,8 +28,8 @@ def agrega_tickets():
 				file.save(os.path.join(app.config['UPLOAD_EXCEL'], filename))
 			except FileNotFoundError:
 				return 'Error, folder does not exist.'
-		df = pd.read_excel(path, engine='openpyxl')
-		df.to_sql(name = table, con = engine, if_exists='append', index=False )
+		# df = pd.read_excel(path, engine='openpyxl')
+		# df.to_sql(name = table, con = engine, if_exists='append', index=False )
 	return 'File upload suscessfuly'
 
 """
@@ -1335,10 +1335,29 @@ def warehouseitagency(locationId):
 		cursor.close()
 		conn.close()
 
+@app.route('/warehouseitname/<int:id>', methods=['GET'])
+def buscarNombreItem(id):
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute("SELECT id, name, serial FROM n_nemesis_n_warehouseitem_model WHERE id=%s", id)
+		rows = cursor.fetchone()
+		resp = jsonify(rows)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+
 @app.route('/warehouseitagencyticket', methods=['POST'])
 def warehouseitemagencyinticketadd():
 	try:
 		_json = request.json
+		_id = _json['id']
+		#_item = buscarNombreItem(_id)
 		_item = _json['item']
 		_serial = _json['serial']
 		_ticketId = int(_json['ticketId'])
@@ -1363,7 +1382,80 @@ def warehouseitemagencyinticketadd():
 	finally:
 		cursor.close()
 		conn.close()
-	
+
+# LegacyId it's the ticketID where we can confirm the item's movement to another Warehouse from a ticket
+@app.route('/wrhsitmrslvtckt/<int:legacyId>', methods=['GET'])
+def itemlegacyId(legacyId):
+	try:
+		conn = mysql.connect()
+		cursor = conn.cursor(pymysql.cursors.DictCursor)
+		cursor.execute('SELECT id, name, serial, version, legacyId, location, locationId, partOf, slot FROM n_nemesis_n_warehouseitem_model WHERE legacyId=%s', legacyId)
+		rows = cursor.fetchall()
+		resp = jsonify(rows)
+		resp.status_code = 200
+		return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+@app.route('/warehouseitemuptickettech/<int:id>', methods=['POST'])
+def updt_wrhsitem_ticket(id):
+	try:
+		_json = request.json
+		_item = _json['item']
+		_item_serial = _json['item_serial']
+		_version = _json['version']
+		_legacyId = _json['legacyId']
+		_location = _json['location']
+		_locationId= int(_json['locationId'])
+		_partOf = _json['partOf']
+		_slot = _json['slot']
+		_status = _json['status']
+		_statusDescription = _json['statusDescription']
+		if request.method == 'POST':
+			sql="UPDATE n_nemesis_n_warehouseitem_model SET version=%s, legacyId=%s, location=%s, locationId=%s, partOf=%s, slot=%s, status=%s, statusDescription=%s WHERE id=%s"
+			data = (_version, _legacyId, _location, _locationId, _partOf, _slot, _status, _statusDescription, id)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = jsonify('Item updated correctly in database')
+			resp.status_code = 200
+			return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
+@app.route('/warehouseitemupticketview/<int:id>', methods=['POST'])
+def updt_wrhsitem_ticketview(id):
+	try:
+		_json = request.json
+		_version = _json['version']
+		_legacyId = _json['legacyId']
+		_partOf = _json['partOf']
+		_slot = _json['slot']
+		if request.method == 'POST':
+			#sql="UPDATE n_nemesis_n_warehouseitem_model SET version=%s, legacyId=%s, location=%s, locationId=%s, partOf=%s, slot=%s, status=%s, statusDescription=%s WHERE id=%s"
+			#data = (_version, _legacyId, _location, _locationId, _partOf, _slot, _status, _statusDescription, id)
+			sql="UPDATE n_nemesis_n_warehouseitem_model SET version=%s, partOf=%s, slot=%s WHERE id=%s AND legacyId=%s"
+			data = (_version, _partOf, _slot, id, _legacyId)
+			conn = mysql.connect()
+			cursor = conn.cursor()
+			cursor.execute(sql, data)
+			conn.commit()
+			resp = jsonify('Item updated correctly in database')
+			resp.status_code = 200
+			return resp
+	except Exception as e:
+		print(e)
+	finally:
+		cursor.close()
+		conn.close()
+
 @app.route('/warehouseitagencyticket/<string:ticketId>', methods=['GET'])
 def warehouseitemagencyinticketget(ticketId):
 	try:
@@ -1853,7 +1945,7 @@ def usermail():
 		_mail = _json['usermail']
 		conn = mysql.connect()
 		cursor = conn.cursor(pymysql.cursors.DictCursor)
-		cursor.execute("SELECT a.id, a.email, a.RoleA, a.RoleC, a.RoleE, a.RoleT, b.name, b.surname, b.address, b.phone, b.customerId \
+		cursor.execute("SELECT a.id, a.email, a.RoleA, a.RoleC, a.RoleE, a.RoleT, b.id as bid, b.name, b.surname, b.address, b.phone, b.customerId \
 			 FROM n_nemesis_users_user_model a, n_nemesis_n_contact_model b WHERE a.email=%s and a.email = b.email", _mail)
 		row = cursor.fetchone()
 		resp = jsonify(row)
@@ -1980,12 +2072,12 @@ def uploader():
 			try:
 				filename = secure_filename(file.filename)
 				file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-				imagen = Image.open(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-				if imagen.width > 1980 and imagen.height > 1080:
-					reducir_imagen = imagen.resize((1980, 1080))
-					reducir_imagen.save(os.path.join(app.config['UPLOAD_FOLDER'], filename), optimize=True)
-				else:
-					imagen.save(os.path.join(app.config['UPLOAD_FOLDER'], filename), optimize=True)	
+				# imagen = Image.open(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+				# if imagen.width > 1980 and imagen.height > 1080:
+				# 	reducir_imagen = imagen.resize((1980, 1080))
+				# 	reducir_imagen.save(os.path.join(app.config['UPLOAD_FOLDER'], filename), optimize=True)
+				# else:
+				# 	imagen.save(os.path.join(app.config['UPLOAD_FOLDER'], filename), optimize=True)	
 			except FileNotFoundError:
 				return 'Error, folder does not exist'
 	return '<h1>Files uploaded sucessfuly</h1>'
